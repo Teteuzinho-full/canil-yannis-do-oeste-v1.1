@@ -1,0 +1,97 @@
+<!DOCTYPE html><html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="robots" content="noindex,nofollow">
+<title>Painel — Yannis do Oeste</title>
+<style>
+:root{--k:#0A0A0A;--k2:#111;--k3:#181818;--cream:#F4F0E8;--gold:#C8A96B;--mut:#a7a196;--line:rgba(244,240,232,.16)}
+*{box-sizing:border-box}body{margin:0;background:var(--k);color:var(--cream);font:16px/1.5 system-ui,sans-serif}
+.w{max-width:1000px;margin:0 auto;padding:20px}h1{font:500 1.8rem Georgia,serif;margin:0}h2{font:500 1.3rem Georgia,serif;margin:24px 0 10px}
+.bar{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:18px}
+button,input,select,textarea{font:inherit;color:var(--cream);background:var(--k3);border:1px solid var(--line);padding:10px 12px;min-height:44px;border-radius:0}
+button{cursor:pointer;transition:border-color .2s}button:hover{border-color:var(--gold)}button.p{background:var(--gold);color:var(--k);border-color:var(--gold);font-weight:700}button.d{border-color:#a55}button:disabled{opacity:.5;cursor:wait}
+:focus-visible{outline:2px solid var(--gold);outline-offset:2px}
+.tabs{display:flex;gap:8px;margin-bottom:18px;overflow-x:auto}.tabs button[aria-selected=true]{border-color:var(--gold);background:rgba(200,169,107,.12)}
+.row{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:14px;border:1px solid var(--line);background:var(--k2);margin-bottom:8px;flex-wrap:wrap}
+small,.mut{color:var(--mut)}.b{padding:2px 8px;border:1px solid var(--line);font-size:.75rem;margin-left:6px}.b.on{color:#8fcf9a;border-color:#8fcf9a}
+form{display:grid;gap:14px;padding:18px;border:1px solid var(--gold);background:var(--k2);margin-bottom:18px}label{display:grid;gap:4px;font-size:.85rem;color:var(--mut)}
+#msg{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:var(--cream);color:var(--k);padding:12px 20px;font-weight:700;display:none;max-width:90%;z-index:90}#msg.er{background:#e59a8a}
+.login{max-width:380px;margin:12vh auto}.empty{padding:36px;border:1px dashed var(--line);text-align:center;color:var(--mut)}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:12px}.st{border:1px solid var(--line);background:var(--k2);padding:16px;cursor:pointer;text-align:left}.st b{font:500 2.2rem Georgia,serif;display:block}
+.meter{height:6px;background:var(--k3);margin-top:10px}.meter i{display:block;height:100%;background:var(--gold)}
+#pal{position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:80;display:grid;place-items:start center;padding-top:14vh}.pb{width:min(520px,92%);background:var(--k2);border:1px solid var(--gold)}.pb input{width:100%;border:0;border-bottom:1px solid var(--line)}
+.pb ul{list-style:none;margin:0;padding:6px;max-height:50vh;overflow:auto}.pb li{padding:12px;cursor:pointer}.pb li.on,.pb li:hover{background:rgba(200,169,107,.15)}
+@media(max-width:600px){.row>div:last-child{width:100%;display:flex;gap:8px}.row button{flex:1}}
+@media(prefers-reduced-motion:reduce){*{transition:none!important}}
+</style></head><body><div class="w" id="app"></div><div id="msg" role="status"></div>
+<script>
+var $=function(s){return document.querySelector(s)},app=$('#app'),tab='home',dogs=[],authed=false,search='';
+var TABS=[['home','Painel'],['dogs','Rottweilers'],['litters','Ninhadas'],['gallery','Galeria'],['testimonials','Depoimentos'],['pw','Senha']];
+var NAMES={dogs:'Rottweilers',litters:'Ninhadas',gallery:'Fotos da galeria',testimonials:'Depoimentos'};
+var CAT=[['ROTTWEILERS','Rottweilers'],['FILHOTES','Filhotes'],['NINHADAS','Ninhadas'],['EXPOSICOES','Exposições'],['CANIL','Canil']];
+var P=['dog'];
+var F={dogs:[['name','Nome','text'],['sex','Sexo','select',[['','—'],['MACHO','Macho'],['FEMEA','Fêmea']]],['birth_date','Data de nascimento','date'],['pedigree','Pedigree / registro','text'],['sire_id','Pai','dog'],['dam_id','Mãe','dog'],['titles','Títulos (somente os reais)','textarea'],['description','Descrição','textarea'],['photo','Foto','file'],['published','Publicar no site','check']],
+litters:[['name','Nome da ninhada','text'],['birth_date','Data de nascimento','date'],['status','Status','select',[['PROXIMA','Próxima'],['DISPONIVEL','Disponível'],['RESERVADO','Reservado'],['ENCERRADO','Encerrado']]],['sire_id','Pai','dog'],['dam_id','Mãe','dog'],['notes','Informações','textarea'],['photo','Foto','file'],['published','Publicar no site','check']],
+gallery:[['caption','Legenda','text'],['category','Categoria','select',CAT],['photo','Foto','file'],['published','Publicar no site','check']],
+testimonials:[['name','Nome de quem escreveu','text'],['text','Depoimento (real)','textarea'],['dog_name','Cão adquirido (opcional)','text'],['photo','Foto (opcional)','file'],['published','Publicar no site','check']]};
+function msg(t,e){var m=$('#msg');m.textContent=t;m.className=e?'er':'';m.style.display='block';clearTimeout(msg.t);msg.t=setTimeout(function(){m.style.display='none'},3500)}
+async function api(m,u,b,raw){var o={method:m,headers:{'X-Requested-With':'fetch'}};if(b){if(raw)o.body=b;else{o.headers['Content-Type']='application/json';o.body=JSON.stringify(b)}}
+var r;try{r=await fetch(u,o)}catch(e){throw new Error('Sem conexão. Verifique a internet e tente de novo.')}
+if(r.status===204)return null;var d=await r.json().catch(function(){return{}});if(!r.ok){if(r.status===401&&u.indexOf('/api/auth/login')<0){login()}throw new Error(d.error||'Erro inesperado.')}return d}
+function el(t,a,k){var e=document.createElement(t);for(var x in a||{})e[x]=a[x];(k||[]).forEach(function(c){e.append(c)});return e}
+function login(){authed=false;app.innerHTML='';var f=el('form',{className:'login'},[el('h1',{textContent:'Painel do canil'}),
+el('label',{textContent:'E-mail'},[el('input',{id:'em',type:'email',autocomplete:'username',required:true})]),
+el('label',{textContent:'Senha'},[el('input',{id:'pw',type:'password',autocomplete:'current-password',required:true})]),
+el('button',{className:'p',type:'submit',textContent:'Entrar'})]);
+f.onsubmit=async function(e){e.preventDefault();var b=f.querySelector('button');b.disabled=true;try{await api('POST','/api/auth/login',{email:$('#em').value,password:$('#pw').value});main()}catch(x){msg(x.message,1);b.disabled=false}};app.append(f);$('#em').focus()}
+async function logout(){try{await api('POST','/api/auth/logout',{})}catch(e){}login()}
+function go(t){tab=t;search='';return main()}
+function add(){if(!F[tab])tab='dogs';return main().then(function(){form($('#box'),null)})}
+async function main(){var me;try{me=await api('GET','/api/auth/me');dogs=await api('GET','/api/admin/dogs')}catch(e){return login()}authed=true;app.innerHTML='';
+app.append(el('div',{className:'bar'},[el('h1',{textContent:'Painel — Yannis do Oeste'}),el('div',{},[el('button',{textContent:'Ctrl+K',title:'Menu de comandos',ariaLabel:'Abrir menu de comandos',onclick:pal}),el('small',{textContent:' '+me.email+' '}),el('button',{textContent:'Sair',onclick:logout})])]));
+var t=el('div',{className:'tabs',role:'tablist'});TABS.forEach(function(x){t.append(el('button',{role:'tab',textContent:x[1],ariaSelected:x[0]===tab,onclick:function(){go(x[0])}}))});app.append(t);
+var box=el('div',{id:'box'});app.append(box);if(tab==='home')return home(box);if(tab==='pw')return pw(box);
+var s=el('input',{type:'search',placeholder:'Buscar…',ariaLabel:'Buscar',value:search,style:'flex:1;min-width:140px'});
+app.insertBefore(el('div',{style:'display:flex;gap:8px;margin-bottom:14px'},[el('button',{className:'p',textContent:'+ Adicionar',onclick:function(){form(box,null)}}),s]),box);
+var rows=[];try{rows=await api('GET','/api/admin/'+tab)}catch(e){return msg(e.message,1)}
+function draw(){var q=search.toLowerCase(),list=rows.filter(function(r){return((r.name||'')+(r.caption||'')+(r.text||'')).toLowerCase().indexOf(q)>-1});list_(box,rows,list)}
+s.oninput=function(){search=s.value;draw()};draw()}
+async function home(box){var d;try{d=await api('GET','/api/admin/stats')}catch(e){return msg(e.message,1)}
+var g=el('div',{className:'stats'});['dogs','litters','gallery','testimonials'].forEach(function(k){var x=d[k],p=x.total?Math.round(x.pub/x.total*100):0;
+g.append(el('button',{className:'st',onclick:function(){go(k)}},[el('small',{textContent:NAMES[k]}),el('b',{textContent:x.pub+' / '+x.total}),el('small',{textContent:'publicados · '+(x.total-x.pub)+' rascunho(s)'}),el('div',{className:'meter'},[el('i',{style:'width:'+p+'%'})])]))});
+box.append(g,el('h2',{textContent:'Atividade recente'}));
+if(!d.recent.length)box.append(el('div',{className:'empty',textContent:'Nenhuma atividade ainda.'}));
+d.recent.forEach(function(r){box.append(el('div',{className:'row'},[el('span',{textContent:r.action+(r.entity?' · '+r.entity:'')}),el('small',{textContent:r.created_at})]))});
+box.append(el('p',{className:'mut',textContent:'Dica: pressione Ctrl+K para ir a qualquer lugar ou criar um item.'}))}
+function pw(box){var f=el('form',{style:'max-width:420px'},[el('h2',{textContent:'Alterar senha',style:'margin:0'}),
+el('label',{textContent:'Senha atual'},[el('input',{id:'p0',type:'password',autocomplete:'current-password',required:true})]),
+el('label',{textContent:'Nova senha (mínimo 10 caracteres)'},[el('input',{id:'p1',type:'password',autocomplete:'new-password',required:true})]),
+el('label',{textContent:'Repita a nova senha'},[el('input',{id:'p2',type:'password',autocomplete:'new-password',required:true})]),el('button',{className:'p',type:'submit',textContent:'Salvar nova senha'})]);
+f.onsubmit=async function(e){e.preventDefault();if($('#p1').value!==$('#p2').value)return msg('As senhas novas não são iguais.',1);var b=f.querySelector('button');b.disabled=true;
+try{await api('POST','/api/auth/password',{current:$('#p0').value,next:$('#p1').value});msg('Senha alterada.');f.reset()}catch(x){msg(x.message,1)}b.disabled=false};box.append(f)}
+function list_(box,all,rows){box.innerHTML='';
+if(!all.length)return box.append(el('div',{className:'empty',textContent:'Nada cadastrado ainda. Use "+ Adicionar" para criar o primeiro item.'}));
+if(!rows.length)return box.append(el('div',{className:'empty',textContent:'Nenhum resultado para essa busca.'}));
+rows.forEach(function(r){var sub=tab==='dogs'?[r.sex==='MACHO'?'Macho':r.sex==='FEMEA'?'Fêmea':'',r.pedigree].filter(Boolean).join(' · '):tab==='litters'?[r.status,r.birth_date].filter(Boolean).join(' · '):tab==='gallery'?r.category:(r.dog_name||'');
+box.append(el('div',{className:'row'},[el('div',{},[el('strong',{textContent:r.name||r.caption}),el('span',{className:'b'+(r.published?' on':''),textContent:r.published?'Publicado':'Rascunho'}),el('br'),el('small',{textContent:sub})]),
+el('div',{},[el('button',{textContent:r.published?'Despublicar':'Publicar',onclick:async function(){try{await api('PUT','/api/admin/'+tab+'/'+r.id,{published:!r.published});msg(r.published?'Despublicado.':'Publicado.');main()}catch(e){msg(e.message,1)}}}),
+el('button',{textContent:'Editar',onclick:function(){form(box,r)}}),
+el('button',{className:'d',textContent:'Excluir',onclick:async function(){if(!confirm('Excluir "'+(r.name||r.caption)+'"? Esta ação não pode ser desfeita.'))return;try{await api('DELETE','/api/admin/'+tab+'/'+r.id);msg('Excluído.');main()}catch(e){msg(e.message,1)}}})])]))})}
+function form(box,r){var old=$('form.ed');if(old)old.remove();var f=el('form',{className:'ed'}),vals={};
+F[tab].forEach(function(c){var k=c[0],type=c[2],i,v=r?r[k]:null;vals[k]=v;
+if(type==='select'||type==='dog'){i=el('select',{});(type==='dog'?[['','—']].concat(dogs.filter(function(d){return!(tab==='dogs'&&r&&d.id===r.id)}).map(function(d){return[String(d.id),d.name]})):c[3]).forEach(function(o){i.append(el('option',{value:o[0],textContent:o[1]}))});i.value=v==null?'':String(v);i.onchange=function(){vals[k]=i.value}}
+else if(type==='textarea'){i=el('textarea',{rows:3,value:v||''});i.oninput=function(){vals[k]=i.value}}
+else if(type==='check'){i=el('input',{type:'checkbox',checked:!!v,style:'width:24px;min-height:24px'});i.onchange=function(){vals[k]=i.checked}}
+else if(type==='file'){i=el('input',{type:'file',accept:'image/jpeg,image/png,image/webp'});i.onchange=async function(){var fd=new FormData();fd.append('file',i.files[0]);try{var u=await api('POST','/api/admin/upload',fd,true);vals[k]=u.url;msg('Imagem enviada.')}catch(e){msg(e.message,1)}}}
+else{i=el('input',{type:type,value:v||''});i.oninput=function(){vals[k]=i.value}}
+f.append(el('label',{textContent:c[1]},[i]))});
+f.append(el('div',{style:'display:flex;gap:8px'},[el('button',{className:'p',type:'submit',textContent:r?'Salvar alterações':'Criar'}),el('button',{type:'button',textContent:'Cancelar',onclick:function(){f.remove()}})]));
+f.onsubmit=async function(e){e.preventDefault();var b=f.querySelector('.p');b.disabled=true;try{await api(r?'PUT':'POST','/api/admin/'+tab+(r?'/'+r.id:''),vals);msg(r?'Alterações salvas.':'Criado.');main()}catch(x){msg(x.message,1);b.disabled=false}};
+box.before(f);f.querySelector('input,select,textarea').focus()}
+function pal(){if($('#pal'))return;var cm=TABS.map(function(t){return['Ir para '+t[1],function(){go(t[0])}]}).concat([['Adicionar novo item',add],['Sair',logout]]),sel=0,f=[],
+o=el('div',{id:'pal',role:'dialog',ariaModal:'true',ariaLabel:'Menu de comandos'}),i=el('input',{placeholder:'Digite um comando…',ariaLabel:'Buscar comando'}),u=el('ul');
+function r(){u.innerHTML='';f=cm.filter(function(c){return c[0].toLowerCase().indexOf(i.value.toLowerCase())>-1});sel=Math.min(sel,Math.max(f.length-1,0));f.forEach(function(c,n){u.append(el('li',{textContent:c[0],className:n===sel?'on':'',onclick:function(){run(c)}}))})}
+function run(c){o.remove();c[1]()}
+i.oninput=function(){sel=0;r()};
+o.onkeydown=function(e){if(e.key==='Escape')o.remove();else if(e.key==='ArrowDown'){e.preventDefault();sel=Math.min(sel+1,f.length-1);r()}else if(e.key==='ArrowUp'){e.preventDefault();sel=Math.max(sel-1,0);r()}else if(e.key==='Enter'&&f[sel])run(f[sel])};
+o.onclick=function(e){if(e.target===o)o.remove()};o.append(el('div',{className:'pb'},[i,u]));document.body.append(o);r();i.focus()}
+addEventListener('keydown',function(e){if((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==='k'&&authed){e.preventDefault();pal()}});
+main();
+</script></body></html>
