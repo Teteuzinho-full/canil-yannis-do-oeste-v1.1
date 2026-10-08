@@ -15,6 +15,13 @@ O usuário SUPER_ADMIN é criado a partir do `.env` se ainda não existir.
 ## Deploy no Vercel
 Veja o passo a passo em `DEPLOY-VERCEL.md`.
 
+## Conteúdo institucional e vídeos
+A home (`views/index.html`) é renderizada no servidor: as seções O canil, Genética, Quem está à frente (Darlan e Bruna), Alimentação, Vacinação, Controle de parasitas, Saúde articular, Pedigree, Microchipagem e Acompanhamento veterinário vêm do banco (`site_content` + `content_images`) e são editadas na aba **Conteúdo** do painel (título, texto, publicar, adicionar/ocultar/reordenar/excluir imagens, enquadramento, legenda, texto alternativo, "Ver no site").
+Dois espaços de vídeo (aba **Vídeos**): "Conheça o Canil" (hoje "Vídeo em breve.") e "Conheça nossos filhotes". Aceitam link do YouTube/Vimeo/arquivo https:// ou envio de MP4/WebM/MOV de até 4 MB, com miniatura; sem autoplay. Sem vídeo publicado, o site mostra "Vídeo em breve."
+O texto oficial e as imagens fornecidas entram como **semente** na migration 2 (`src/seed-content.js`; arquivos em `public/assets/content`, `public/assets/partners`, `public/assets/video`). Bancos já existentes recebem a migration automaticamente, sem perder dados.
+Galeria: categorias novas — Alimentação, Vacinação, Saúde, Veterinário, Pedigree, Microchipagem e Pessoas.
+API: `GET /api/content`; admin: `GET /api/admin/content`, `PUT /api/admin/content/:slug`, `POST /api/admin/content/:slug/images`, `PUT|DELETE /api/admin/content/images/:id`, `POST /api/admin/content/images/:id/move`, `GET /api/admin/videos`, `PUT /api/admin/videos/:slot`, `POST /api/admin/upload-video`.
+
 ## Páginas públicas (com SEO)
 `/rottweilers` (`?sexo=macho|femea`), `/rottweilers/:id`, `/filhotes`, `/ninhadas/:id`: title, description, canonical, Open Graph, Twitter Card, breadcrumbs e JSON-LD; todas no `/sitemap.xml`. Itens não publicados dão 404.
 
@@ -33,7 +40,7 @@ bcrypt; cookie httpOnly + SameSite=Strict (+Secure em produção); JWT 8 h; perm
 Obs.: o rate limit usa memória, então no Vercel (serverless) vale por instância — é uma proteção parcial.
 
 ## Estrutura
-`api/index.js` (entrada Vercel), `src/app.js` (rotas), `src/server.js` (local), `src/db.js`, `src/pages.js`, `src/validate.js`, `public/`, `vercel.json`.
+`api/index.js` (entrada Vercel), `src/app.js` (rotas), `src/content.js` (conteúdo e vídeos), `src/server.js` (local), `src/db.js` (migrations), `src/seed-content.js`, `src/pages.js` (páginas e home renderizadas no servidor), `src/validate.js`, `views/` (home e 404, servidas pelo Express), `public/` (admin e arquivos estáticos), `vercel.json`.
 
 ## Ainda não implementado
-Recuperação de senha por e-mail, cadastro de novos usuários, linha do tempo da ninhada, FAQ editável, gráficos, auditoria Lighthouse, remoção do arquivo no Blob ao excluir um item.
+Recuperação de senha por e-mail, cadastro de novos usuários, linha do tempo da ninhada, FAQ editável, gráficos, auditoria Lighthouse, remoção do arquivo no Blob ao excluir, armazenamento privado de documentos (hoje só dá para ocultar uma imagem), envio de vídeos grandes direto ao Blob (use link do YouTube/Vimeo ou arquivo de até 4 MB).

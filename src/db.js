@@ -30,6 +30,26 @@ const MIGRATIONS = [[
   'CREATE INDEX idx_dogs_pub ON dogs(published)',
   'CREATE INDEX idx_litters_pub ON litters(published, status)',
   'CREATE INDEX idx_gallery_pub ON gallery(published)',
+], [
+  `CREATE TABLE site_content(slug TEXT PRIMARY KEY, title TEXT NOT NULL, subtitle TEXT, body TEXT, extra TEXT,
+    sort INTEGER NOT NULL DEFAULT 0, published SMALLINT NOT NULL DEFAULT 1, created_at ${TS}, updated_at ${TS})`,
+  `CREATE TABLE content_images(id SERIAL PRIMARY KEY, slug TEXT NOT NULL REFERENCES site_content(slug) ON UPDATE CASCADE ON DELETE CASCADE,
+    url TEXT NOT NULL, alt TEXT, caption TEXT, position TEXT NOT NULL DEFAULT 'center', sort INTEGER NOT NULL DEFAULT 0,
+    published SMALLINT NOT NULL DEFAULT 1, created_at ${TS})`,
+  'CREATE INDEX idx_content_images_slug ON content_images(slug, sort)',
+  `CREATE TABLE videos(slot TEXT PRIMARY KEY CHECK(slot IN('canil','filhotes')), title TEXT, description TEXT, url TEXT, poster TEXT,
+    published SMALLINT NOT NULL DEFAULT 0, updated_at ${TS})`,
+  'ALTER TABLE gallery DROP CONSTRAINT IF EXISTS gallery_category_check',
+  `ALTER TABLE gallery ADD CONSTRAINT gallery_category_check CHECK(category IN('ROTTWEILERS','FILHOTES','NINHADAS','EXPOSICOES','CANIL',
+    'ALIMENTACAO','VACINACAO','SAUDE','VETERINARIO','PEDIGREE','MICROCHIPAGEM','PESSOAS'))`,
+  async c => {
+    const { SECTIONS, IMAGES, GALLERY, VIDEOS, C } = require('./seed-content');
+    for (const s of SECTIONS) await c.query('INSERT INTO site_content(slug,sort,title,subtitle,body,extra) VALUES($1,$2,$3,$4,$5,$6)', [s.slug, s.sort, s.title, s.subtitle, s.body, s.extra]);
+    let n = 0;
+    for (const [slug, f, alt, cap, pub] of IMAGES) await c.query('INSERT INTO content_images(slug,url,alt,caption,sort,published) VALUES($1,$2,$3,$4,$5,$6)', [slug, `${C}${f}.webp`, alt, cap, (n += 10), pub]);
+    for (const [f, cap, cat, pub] of GALLERY) await c.query('INSERT INTO gallery(caption,category,photo,published) VALUES($1,$2,$3,$4)', [cap, cat, `${C}${f}.webp`, pub]);
+    for (const v of VIDEOS) await c.query('INSERT INTO videos(slot,title,description,url,poster,published) VALUES($1,$2,$3,$4,$5,$6)', [v.slot, v.title, v.description, v.url, v.poster, v.published]);
+  },
 ]];
 
 async function init() {
@@ -40,7 +60,7 @@ async function init() {
     const { rows: r } = await c.query('SELECT COALESCE(MAX(version),0)::int AS v FROM schema_migrations');
     for (let v = r[0].v; v < MIGRATIONS.length; v++) {
       await c.query('BEGIN');
-      try { for (const s of MIGRATIONS[v]) await c.query(s); await c.query('INSERT INTO schema_migrations(version) VALUES($1)', [v + 1]); await c.query('COMMIT'); }
+      try { for (const s of MIGRATIONS[v]) await (typeof s === 'function' ? s(c) : c.query(s)); await c.query('INSERT INTO schema_migrations(version) VALUES($1)', [v + 1]); await c.query('COMMIT'); }
       catch (e) { await c.query('ROLLBACK'); throw e; }
     }
     const { ADMIN_EMAIL, ADMIN_PASSWORD } = process.env;

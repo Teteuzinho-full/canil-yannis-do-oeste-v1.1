@@ -7,3 +7,8 @@
 5. **Deploy**. No primeiro acesso as tabelas e o administrador são criados sozinhos.
 6. Abra `https://seu-dominio/admin`, entre e cadastre os cães.
 7. **Domínio próprio**: Settings → Domains. Depois atualize `BASE_URL` e faça um novo deploy (canonical, sitemap e Open Graph usam esse valor).
+
+## Atualizando um projeto que já está no Vercel
+1. No repositório do GitHub, substitua os arquivos pelos da nova versão. A pasta `views/` e as pastas `public/assets/content`, `public/assets/partners` e `public/assets/video` são novas; `public/index.html` e `public/404.html` foram movidos para `views/` (apague os antigos).
+2. Faça commit. O Vercel publica sozinho.
+3. No primeiro acesso depois do deploy, o banco recebe a migration nova (conteúdo institucional e vídeos) automaticamente; cães, ninhadas, galeria e usuário continuam como estavam.

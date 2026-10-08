@@ -22,6 +22,7 @@ a.dc,a.card{display:flex}a.card{flex-direction:column}a.dc .mut{position:absolut
 @media(max-width:900px){.hero2{grid-template-columns:1fr}.ped{grid-template-columns:1fr}.cta-fix{width:calc(100% - 28px);justify-content:center}}`;
 
 function layout({ title, desc, path, image, crumbs, body, cta }) {
+  image = image || '/assets/img/og.jpg';
   const url = BASE + path;
   const bc = { '@context': 'https://schema.org', '@type': 'BreadcrumbList',
     itemListElement: crumbs.map((c, i) => ({ '@type': 'ListItem', position: i + 1, name: c[0], item: BASE + c[1] })) };
@@ -49,7 +50,7 @@ const LQ = `SELECT l.*,s.name AS sire_name,d.name AS dam_name FROM litters l LEF
 
 async function pedigree(d) {
   const [s, m] = await Promise.all([get(d.sire_id), get(d.dam_id)]);
-  if (!s && !m) return '<p>Pedigree ainda não cadastrado.</p>';
+  if (!s && !m) return '<p>Informação ainda não cadastrada.</p>';
   const [a, b, c, e] = await Promise.all([get(s?.sire_id), get(s?.dam_id), get(m?.sire_id), get(m?.dam_id)]);
   const col = (label, p, x, y) => `<div><small>${label}</small><b>${who(p)}</b><small>Pais</small><span>${who(x)} × ${who(y)}</span></div>`;
   return `<div class="ped">${col('Pai', s, a, b)}${col('Mãe', m, c, e)}</div>`;
@@ -98,6 +99,65 @@ exports.litter = async id => {
     crumbs: [['Início', '/'], ['Filhotes', '/filhotes'], [l.name, `/ninhadas/${l.id}`]], cta: ['Quero saber sobre esta ninhada', wa(`Olá! Gostaria de saber mais sobre a ninhada ${l.name}.`)],
     body: `<div class="hero2"><div>${l.photo ? `<img src="${esc(l.photo)}" alt="Ninhada ${esc(l.name)}" width="800" height="1000" fetchpriority="high">` : '<div class="ph"><div><b>Foto a cadastrar</b></div></div>'}</div>
 <div><h1 class="big">${esc(l.name)}</h1><p style="margin-bottom:20px"><span class="status ${s[1]}">${s[0]}</span></p>${rows ? `<dl class="facts">${rows}</dl>` : ''}${l.notes ? `<p>${esc(l.notes)}</p>` : ''}</div></div>` });
+};
+
+// ---------- Home: seções institucionais renderizadas no servidor (texto sempre escapado) ----------
+const para = b => String(b || '').split(/\n{2,}/).map(p => p.trim()).filter(Boolean).map(p => `<p>${esc(p)}</p>`).join('');
+const POS = /^(center|top|bottom|left|right|\d{1,3}% \d{1,3}%)$/;
+const fig = (im, s) => `<figure class="fg"><div class="lbx" data-g="${esc(s.slug)}" data-c="${esc(s.title)}" tabindex="0" role="button" aria-label="Ampliar imagem: ${esc(im.alt || s.title)}"><img src="${esc(im.url)}" alt="${esc(im.alt || '')}" loading="lazy" decoding="async" style="object-position:${POS.test(im.position) ? im.position : 'center'}"></div>${im.caption ? `<figcaption>${esc(im.caption)}</figcaption>` : ''}</figure>`;
+const EB = { sobre: 'Origem', genetica: 'Genética', alimentacao: 'Nutrição', vacinacao: 'Saúde preventiva', parasitas: 'Manejo sanitário', 'saude-articular': 'Parceria', pedigree: 'Documentação', microchipagem: 'Identificação', veterinario: 'Rotina' };
+
+async function loadContent() {
+  const [rows, imgs, vids] = await Promise.all([
+    db.rows('SELECT slug,title,subtitle,body,extra FROM site_content WHERE published=1 ORDER BY sort'),
+    db.rows('SELECT slug,url,alt,caption,position FROM content_images WHERE published=1 ORDER BY sort,id'),
+    db.rows('SELECT slot,title,description,url,poster FROM videos WHERE published=1 AND url IS NOT NULL')]);
+  const map = {}; rows.forEach(r => (map[r.slug] = { ...r, images: imgs.filter(i => i.slug === r.slug) }));
+  return { map, videos: Object.fromEntries(vids.map(v => [v.slot, v])) };
+}
+
+function editorial(s, { alt, off, rev, main = s.images, below = '', after = '' }) {
+  const media = main.length ? `<div class="sxm n${Math.min(main.length, 3)}">${main.map(i => fig(i, s)).join('')}</div>` : '';
+  return `<section id="${s.slug === 'sobre' ? 'canil' : 's-' + s.slug}" class="sx${alt ? ' alt' : ''}${off ? ' off' : ''}"><div class="wrap sxg${media ? '' : ' one'}${rev ? ' rev' : ''}"><div class="sxt"><p class="eb">${esc(EB[s.slug] || '')}</p><h2>${esc(s.title)}</h2>${s.subtitle ? `<p class="sub">${esc(s.subtitle)}</p>` : ''}<div class="paras">${para(s.body)}</div>${after}</div>${media}</div>${below}</section>`;
+}
+const strip = (s, list, heading) => list.length ? `<div class="wrap reg">${heading ? `<h3>${esc(heading)}</h3>` : ''}<div class="strip3">${list.map(i => fig(i, s)).join('')}</div></div>` : '';
+
+function person(s, mono) {
+  const im = s.images[0];
+  return `<article class="pc"><div class="pf">${im ? fig(im, s) : `<div class="mono" aria-hidden="true">${mono}</div>`}</div><h3>${esc(s.title)}</h3>${s.subtitle ? `<p class="role">${esc(s.subtitle)}</p>` : ''}${para(s.body)}</article>`;
+}
+
+function videoBlock(slot, v, fb, alt) {
+  const yt = v?.url && /^https:\/\/(?:www\.)?(?:youtube\.com\/watch\?v=|youtu\.be\/)([\w-]{11})/.exec(v.url);
+  const vm = v?.url && /^https:\/\/(?:www\.)?vimeo\.com\/(\d+)/.exec(v.url);
+  const title = v?.title || fb.title, desc = v ? v.description : fb.desc;
+  let frame;
+  if (yt) frame = `<iframe src="https://www.youtube-nocookie.com/embed/${yt[1]}" title="${esc(title)}" loading="lazy" allow="encrypted-media; picture-in-picture; fullscreen" allowfullscreen referrerpolicy="strict-origin-when-cross-origin"></iframe>`;
+  else if (vm) frame = `<iframe src="https://player.vimeo.com/video/${vm[1]}" title="${esc(title)}" loading="lazy" allow="picture-in-picture; fullscreen" allowfullscreen></iframe>`;
+  else if (v?.url) frame = `<video controls preload="none" playsinline ${v.poster ? `poster="${esc(v.poster)}"` : ''} aria-label="${esc(title)}"><source src="${esc(v.url)}">Seu navegador não reproduz este vídeo. <a href="${esc(v.url)}">Abrir o vídeo</a></video>`;
+  return `<section id="s-video-${slot}" class="sx vsec${alt ? ' alt' : ''}"><div class="wrap"><div class="sxt c"><p class="eb">Vídeo</p><h2>${esc(title)}</h2>${desc ? `<p class="sub">${esc(desc)}</p>` : ''}</div>${frame ? `<div class="vf">${frame}</div>` : '<div class="vf soon"><div><b>Vídeo em breve.</b></div></div>'}</div></section>`;
+}
+
+exports.home = async tpl => {
+  const { map: m, videos } = await loadContent();
+  let n = 0; const alt = () => n++ % 2 === 1;
+  const R = {};
+  if (m.sobre) R.sobre = editorial(m.sobre, { alt: alt(), after: '<p style="margin-top:28px"><a class="ul" href="#s-equipe">Conheça quem está à frente do canil →</a></p>' });
+  if (m.genetica) R.genetica = editorial(m.genetica, { alt: alt(), rev: true, after: '<div class="lin" role="img" aria-label="As famílias Timit-Tor e vom Hause Edelstein são referências para a formação do plantel do Canil Yannis do Oeste"><span>Timit-Tor</span><span>vom Hause Edelstein</span><i></i><b>Plantel Yannis do Oeste</b></div>' });
+  if (m.socios || m.darlan || m.bruna) {
+    const s = m.socios || { title: 'Quem está à frente do canil', body: '' };
+    R.equipe = `<section id="s-equipe" class="sx${alt() ? ' alt' : ''}"><div class="wrap"><div class="sxt c"><p class="eb">Pessoas</p><h2>${esc(s.title)}</h2></div><div class="team">${m.darlan ? person(m.darlan, 'D') : ''}${m.bruna ? person(m.bruna, 'B') : ''}</div>${s.body ? `<div class="sxt c" style="margin-top:40px"><div class="paras">${para(s.body)}</div></div>` : ''}</div></section>`;
+  }
+  if (m.alimentacao) R.alimentacao = editorial(m.alimentacao, { alt: alt() });
+  if (m.vacinacao) { const v = m.vacinacao; R.vacinacao = editorial(v, { alt: alt(), rev: true, main: v.images.slice(0, 1), below: strip(v, v.images.slice(1), v.extra) }); }
+  if (m.parasitas) R.parasitas = editorial(m.parasitas, { alt: alt() });
+  if (m['saude-articular']) { const v = m['saude-articular']; R['saude-articular'] = editorial(v, { off: true, main: v.images.slice(0, 1), below: strip(v, v.images.slice(1)) }); n++; }
+  if (m.pedigree) R.pedigree = editorial(m.pedigree, { alt: alt(), after: '<p style="margin-top:28px"><a class="ul" href="/rottweilers">Ver o pedigree de cada Rottweiler →</a></p>' });
+  if (m.microchipagem) R.microchipagem = editorial(m.microchipagem, { alt: alt(), rev: true });
+  if (m.veterinario) R.veterinario = editorial(m.veterinario, { alt: alt() });
+  R.videos = videoBlock('canil', videos.canil, { title: 'Conheça o Canil Yannis do Oeste', desc: 'Um olhar mais próximo sobre o Canil Yannis do Oeste.' }, alt())
+    + videoBlock('filhotes', videos.filhotes, { title: 'Conheça nossos filhotes', desc: null }, alt());
+  return tpl.replace(/<!--SX:([\w-]+)-->/g, (x, k) => R[k] || '').replaceAll('%BASE_URL%', BASE);
 };
 
 exports.urls = async () => ['/', '/rottweilers', '/filhotes',

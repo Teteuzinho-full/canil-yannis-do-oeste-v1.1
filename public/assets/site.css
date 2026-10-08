@@ -88,3 +88,24 @@ footer{border-top:1px solid var(--line);padding:56px 0 calc(56px + 70px);font-si
 .dc img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;transition:transform .6s}.dc:hover img{transform:scale(1.04)}.dc .in{position:relative;width:100%;padding:24px;background:linear-gradient(transparent,rgba(0,0,0,.88));display:grid;gap:8px}.dc .in p{font-size:.9rem}
 .card img.cp{aspect-ratio:16/10;width:100%;object-fit:cover}
 .gal{grid-auto-flow:dense}.ph.im::before{display:none}.ph.im{padding:0}
+/* ---- seções institucionais ---- */
+.sx{padding:clamp(72px,10vw,130px) 0;background:var(--k)}.sx.alt{background:var(--k2)}.sx.off{background:var(--cream);color:var(--k)}.sx.off p{color:#5b564d}.sx.off .sub{color:#6b5a3a}
+.eb{font:700 .7rem/1 var(--sans);letter-spacing:.24em;text-transform:uppercase;color:var(--gold);margin:0 0 18px}.sx.off .eb{color:var(--amber)}
+.sxg{display:grid;grid-template-columns:1fr 1fr;gap:clamp(32px,7vw,100px);align-items:center}.sxg.rev .sxt{order:2}.sxg.one{grid-template-columns:minmax(0,760px)}
+.sxt h2{margin-bottom:14px}.sxt .sub{font:italic 500 1.35rem/1.35 var(--serif);color:var(--gold);margin:0 0 24px;max-width:36ch}.sxt.c{text-align:center;margin:0 auto 44px}.sxt.c .sub,.sxt.c p{margin-inline:auto}
+.paras{display:grid;gap:16px}.paras p{max-width:58ch}
+.sxm{display:grid;grid-template-columns:1fr 1fr;gap:14px}.sxm .fg:first-child{grid-column:1/-1}.sxm.n1 .fg:first-child{grid-column:1/-1}
+.fg{margin:0}.fg .lbx{position:relative;overflow:hidden;cursor:zoom-in;border:1px solid var(--line);background:var(--k3);aspect-ratio:4/5}.sxm .fg:first-child .lbx{aspect-ratio:4/5}.sxm.n3 .fg:first-child .lbx{aspect-ratio:16/10}
+.fg img{width:100%;height:100%;object-fit:cover;transition:transform .6s}.fg .lbx:hover img{transform:scale(1.03)}.fg figcaption{font-size:.8rem;color:var(--mut);margin-top:8px}
+.sx.off .fg .lbx{border-color:rgba(0,0,0,.14)}
+.reg{margin-top:clamp(40px,6vw,72px)}.reg h3{margin-bottom:22px}.strip3{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,260px),1fr));gap:14px}.strip3 .lbx{aspect-ratio:4/3}
+.team{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,320px),1fr));gap:clamp(24px,5vw,56px);max-width:960px;margin:0 auto}
+.pc{display:grid;gap:12px;align-content:start}.pf .lbx,.pf .mono{aspect-ratio:4/5}.mono{display:grid;place-items:center;border:1px solid var(--line);background:linear-gradient(160deg,var(--k3),#0d0d0d);font:500 6rem var(--serif);color:var(--gold)}
+.pc .role{font:700 .72rem var(--sans);letter-spacing:.14em;text-transform:uppercase;color:var(--gold)}
+.lin{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:32px;max-width:460px}.lin span,.lin b{padding:14px 12px;border:1px solid var(--line);background:var(--k3);text-align:center;font:500 1.2rem var(--serif)}
+.lin i{grid-column:1/-1;height:34px;width:1px;background:var(--gold);justify-self:center;opacity:.7}.lin b{grid-column:1/-1;border-color:var(--gold);color:var(--gold);font-weight:500}
+.vsec .vf{max-width:760px;margin:0 auto;border:1px solid var(--line);background:#000}.vf video,.vf iframe{display:block;width:100%;max-height:80vh;border:0}.vf iframe{aspect-ratio:16/9}.vf video{object-fit:contain;aspect-ratio:auto}
+.vf.soon{aspect-ratio:16/9;display:grid;place-items:center;background:linear-gradient(160deg,var(--k3),#0d0d0d);text-align:center;color:var(--mut)}.vf.soon b{font:500 1.6rem var(--serif);color:var(--cream)}
+.pt{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(4,1fr);border:1px solid rgba(0,0,0,.18)}.pt li{display:grid;place-items:center;padding:28px 18px;border-right:1px solid rgba(0,0,0,.18);border-bottom:1px solid rgba(0,0,0,.18);min-height:120px;text-align:center}
+.pt li.w2{grid-column:span 2}.pt img{max-height:76px;width:auto;max-width:100%;mix-blend-mode:multiply}.pt .tx b{font:600 1.5rem var(--serif)}.pt .tx small{display:block;font:500 .7rem var(--sans);letter-spacing:.14em;text-transform:uppercase;color:#6b655a}
+@media(max-width:900px){.sxg{grid-template-columns:1fr}.sxg.rev .sxt{order:0}.pt{grid-template-columns:1fr 1fr}.pt li.w2{grid-column:1/-1}.lin{max-width:none}}

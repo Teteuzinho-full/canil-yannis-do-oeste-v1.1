@@ -23,9 +23,9 @@ form{display:grid;gap:14px;padding:18px;border:1px solid var(--gold);background:
 </style></head><body><div class="w" id="app"></div><div id="msg" role="status"></div>
 <script>
 var $=function(s){return document.querySelector(s)},app=$('#app'),tab='home',dogs=[],authed=false,search='';
-var TABS=[['home','Painel'],['dogs','Rottweilers'],['litters','Ninhadas'],['gallery','Galeria'],['testimonials','Depoimentos'],['pw','Senha']];
+var TABS=[['home','Painel'],['dogs','Rottweilers'],['litters','Ninhadas'],['gallery','Galeria'],['testimonials','Depoimentos'],['content','Conteúdo'],['videos','Vídeos'],['pw','Senha']];
 var NAMES={dogs:'Rottweilers',litters:'Ninhadas',gallery:'Fotos da galeria',testimonials:'Depoimentos'};
-var CAT=[['ROTTWEILERS','Rottweilers'],['FILHOTES','Filhotes'],['NINHADAS','Ninhadas'],['EXPOSICOES','Exposições'],['CANIL','Canil']];
+var CAT=[['ROTTWEILERS','Rottweilers'],['FILHOTES','Filhotes'],['NINHADAS','Ninhadas'],['EXPOSICOES','Exposições'],['CANIL','Canil'],['ALIMENTACAO','Alimentação'],['VACINACAO','Vacinação'],['SAUDE','Saúde'],['VETERINARIO','Veterinário'],['PEDIGREE','Pedigree'],['MICROCHIPAGEM','Microchipagem'],['PESSOAS','Pessoas']];
 var P=['dog'];
 var F={dogs:[['name','Nome','text'],['sex','Sexo','select',[['','—'],['MACHO','Macho'],['FEMEA','Fêmea']]],['birth_date','Data de nascimento','date'],['pedigree','Pedigree / registro','text'],['sire_id','Pai','dog'],['dam_id','Mãe','dog'],['titles','Títulos (somente os reais)','textarea'],['description','Descrição','textarea'],['photo','Foto','file'],['published','Publicar no site','check']],
 litters:[['name','Nome da ninhada','text'],['birth_date','Data de nascimento','date'],['status','Status','select',[['PROXIMA','Próxima'],['DISPONIVEL','Disponível'],['RESERVADO','Reservado'],['ENCERRADO','Encerrado']]],['sire_id','Pai','dog'],['dam_id','Mãe','dog'],['notes','Informações','textarea'],['photo','Foto','file'],['published','Publicar no site','check']],
@@ -47,7 +47,7 @@ function add(){if(!F[tab])tab='dogs';return main().then(function(){form($('#box'
 async function main(){var me;try{me=await api('GET','/api/auth/me');dogs=await api('GET','/api/admin/dogs')}catch(e){return login()}authed=true;app.innerHTML='';
 app.append(el('div',{className:'bar'},[el('h1',{textContent:'Painel — Yannis do Oeste'}),el('div',{},[el('button',{textContent:'Ctrl+K',title:'Menu de comandos',ariaLabel:'Abrir menu de comandos',onclick:pal}),el('small',{textContent:' '+me.email+' '}),el('button',{textContent:'Sair',onclick:logout})])]));
 var t=el('div',{className:'tabs',role:'tablist'});TABS.forEach(function(x){t.append(el('button',{role:'tab',textContent:x[1],ariaSelected:x[0]===tab,onclick:function(){go(x[0])}}))});app.append(t);
-var box=el('div',{id:'box'});app.append(box);if(tab==='home')return home(box);if(tab==='pw')return pw(box);
+var box=el('div',{id:'box'});app.append(box);if(tab==='home')return home(box);if(tab==='pw')return pw(box);if(tab==='content')return cont(box);if(tab==='videos')return vids(box);
 var s=el('input',{type:'search',placeholder:'Buscar…',ariaLabel:'Buscar',value:search,style:'flex:1;min-width:140px'});
 app.insertBefore(el('div',{style:'display:flex;gap:8px;margin-bottom:14px'},[el('button',{className:'p',textContent:'+ Adicionar',onclick:function(){form(box,null)}}),s]),box);
 var rows=[];try{rows=await api('GET','/api/admin/'+tab)}catch(e){return msg(e.message,1)}
@@ -60,6 +60,43 @@ box.append(g,el('h2',{textContent:'Atividade recente'}));
 if(!d.recent.length)box.append(el('div',{className:'empty',textContent:'Nenhuma atividade ainda.'}));
 d.recent.forEach(function(r){box.append(el('div',{className:'row'},[el('span',{textContent:r.action+(r.entity?' · '+r.entity:'')}),el('small',{textContent:r.created_at})]))});
 box.append(el('p',{className:'mut',textContent:'Dica: pressione Ctrl+K para ir a qualquer lugar ou criar um item.'}))}
+var SEC={sobre:'O canil',genetica:'Genética',socios:'Quem está à frente (texto)',darlan:'Darlan',bruna:'Bruna',alimentacao:'Alimentação',vacinacao:'Vacinação',parasitas:'Controle de parasitas',
+'saude-articular':'Saúde articular',pedigree:'Pedigree',microchipagem:'Microchipagem',veterinario:'Acompanhamento veterinário'};
+async function up(file,url){var fd=new FormData();fd.append('file',file);return (await api('POST',url||'/api/admin/upload',fd,true)).url}
+async function cont(box){var rows;try{rows=await api('GET','/api/admin/content')}catch(e){return msg(e.message,1)}box.innerHTML='';
+box.append(el('p',{className:'mut',textContent:'Cada bloco do site pode ser editado, publicado e receber imagens. Separe parágrafos com uma linha em branco.'}));
+rows.forEach(function(r){box.append(el('div',{className:'row'},[el('div',{},[el('strong',{textContent:SEC[r.slug]||r.slug}),el('span',{className:'b'+(r.published?' on':''),textContent:r.published?'Publicado':'Rascunho'}),el('br'),el('small',{textContent:r.images.length+' imagem(ns) · '+(r.title||'')})]),
+el('div',{},[el('a',{href:'/#'+(r.slug==='sobre'?'canil':'s-'+(r.slug==='socios'||r.slug==='darlan'||r.slug==='bruna'?'equipe':r.slug)),target:'_blank',rel:'noopener',textContent:'Ver no site',style:'padding:10px;color:var(--gold)'}),el('button',{textContent:'Editar',onclick:function(){secForm(box,r)}})])]))})}
+function secForm(box,r){var old=$('form.ed');if(old)old.remove();var f=el('form',{className:'ed'}),v={title:r.title,subtitle:r.subtitle||'',body:r.body||'',extra:r.extra||'',published:!!r.published};
+[['title','Título','text'],['subtitle','Subtítulo / função','text'],['body','Texto','textarea'],['extra','Título do bloco de imagens extra (opcional)','text']].forEach(function(c){var i=c[2]==='textarea'?el('textarea',{rows:8,value:v[c[0]]}):el('input',{type:'text',value:v[c[0]]});i.oninput=function(){v[c[0]]=i.value};f.append(el('label',{textContent:c[1]},[i]))});
+var ck=el('input',{type:'checkbox',checked:v.published,style:'width:24px;min-height:24px'});ck.onchange=function(){v.published=ck.checked};f.append(el('label',{textContent:'Publicar no site'},[ck]));
+f.append(el('h2',{textContent:'Imagens ('+r.images.length+')',style:'margin:8px 0 0'}));
+if(!r.images.length)f.append(el('div',{className:'empty',textContent:'Nenhuma imagem ainda. Use o campo abaixo para adicionar.'}));
+r.images.forEach(function(im,k){var pos=el('select',{},['center','top','bottom','left','right'].map(function(p){return el('option',{value:p,textContent:'Enquadramento: '+p})}));pos.value=im.position;
+var alt=el('input',{type:'text',value:im.alt||'',placeholder:'Texto alternativo (descreva a imagem)'}),cap=el('input',{type:'text',value:im.caption||'',placeholder:'Legenda (opcional)'});
+var save=async function(extra){try{await api('PUT','/api/admin/content/images/'+im.id,Object.assign({alt:alt.value,caption:cap.value,position:pos.value},extra||{}));msg('Imagem salva.');return true}catch(e){msg(e.message,1)}};
+f.append(el('div',{className:'row',style:'align-items:flex-start'},[el('img',{src:im.url,alt:'',style:'width:90px;height:90px;object-fit:cover;object-position:'+im.position}),
+el('div',{style:'flex:1;min-width:200px;display:grid;gap:6px'},[alt,cap,pos,el('small',{className:'mut',textContent:im.published?'Visível no site':'Oculta (rascunho)'})]),
+el('div',{style:'display:flex;gap:6px;flex-wrap:wrap'},[el('button',{type:'button',textContent:'Salvar',onclick:function(){save()}}),
+el('button',{type:'button',textContent:im.published?'Ocultar':'Mostrar',onclick:async function(){if(await save({published:!im.published}))main()}}),
+el('button',{type:'button',textContent:'↑',ariaLabel:'Mover para cima',onclick:async function(){try{await api('POST','/api/admin/content/images/'+im.id+'/move',{dir:'up'});main()}catch(e){msg(e.message,1)}}}),
+el('button',{type:'button',textContent:'↓',ariaLabel:'Mover para baixo',onclick:async function(){try{await api('POST','/api/admin/content/images/'+im.id+'/move',{dir:'down'});main()}catch(e){msg(e.message,1)}}}),
+el('button',{type:'button',className:'d',textContent:'Excluir',onclick:async function(){if(!confirm('Excluir esta imagem?'))return;try{await api('DELETE','/api/admin/content/images/'+im.id);msg('Imagem excluída.');main()}catch(e){msg(e.message,1)}}})])]))});
+var nf=el('input',{type:'file',accept:'image/jpeg,image/png,image/webp'});nf.onchange=async function(){try{var u=await up(nf.files[0]);await api('POST','/api/admin/content/'+r.slug+'/images',{url:u,alt:'',caption:''});msg('Imagem adicionada. Preencha o texto alternativo.');main()}catch(e){msg(e.message,1)}};
+f.append(el('label',{textContent:'Adicionar imagem (JPG, PNG ou WebP, até 4 MB)'},[nf]));
+f.append(el('div',{style:'display:flex;gap:8px'},[el('button',{className:'p',type:'submit',textContent:'Salvar texto'}),el('button',{type:'button',textContent:'Cancelar',onclick:function(){f.remove()}})]));
+f.onsubmit=async function(e){e.preventDefault();var b=f.querySelector('.p');b.disabled=true;try{await api('PUT','/api/admin/content/'+r.slug,v);msg('Conteúdo salvo.');main()}catch(x){msg(x.message,1);b.disabled=false}};
+box.before(f);f.querySelector('input').focus()}
+async function vids(box){var rows;try{rows=await api('GET','/api/admin/videos')}catch(e){return msg(e.message,1)}box.innerHTML='';
+box.append(el('p',{className:'mut',textContent:'Cole um link do YouTube, Vimeo ou de um arquivo de vídeo (https://), ou envie um arquivo MP4/WebM/MOV de até 4 MB. Sem vídeo publicado, o site mostra "Vídeo em breve."'}));
+rows.forEach(function(r){var v={title:r.title||'',description:r.description||'',url:r.url||'',poster:r.poster||'',published:!!r.published},f=el('form',{className:'ed'});
+f.append(el('h2',{textContent:r.slot==='canil'?'Vídeo do canil':'Vídeo dos filhotes',style:'margin:0'}));
+[['title','Título','text'],['description','Descrição','textarea'],['url','URL do vídeo','text']].forEach(function(c){var i=c[2]==='textarea'?el('textarea',{rows:2,value:v[c[0]]}):el('input',{type:'text',value:v[c[0]]});i.oninput=function(){v[c[0]]=i.value};if(c[0]==='url')i.id='u-'+r.slot;f.append(el('label',{textContent:c[1]},[i]))});
+var vf=el('input',{type:'file',accept:'video/mp4,video/webm,video/quicktime'});vf.onchange=async function(){try{v.url=await up(vf.files[0],'/api/admin/upload-video');$('#u-'+r.slot).value=v.url;msg('Vídeo enviado. Salve para aplicar.')}catch(e){msg(e.message,1)}};f.append(el('label',{textContent:'Ou enviar arquivo de vídeo'},[vf]));
+var pf=el('input',{type:'file',accept:'image/jpeg,image/png,image/webp'});pf.onchange=async function(){try{v.poster=await up(pf.files[0]);msg('Miniatura enviada. Salve para aplicar.')}catch(e){msg(e.message,1)}};f.append(el('label',{textContent:'Miniatura (poster)'+(v.poster?' — atual: '+v.poster:'')},[pf]));
+var ck=el('input',{type:'checkbox',checked:v.published,style:'width:24px;min-height:24px'});ck.onchange=function(){v.published=ck.checked};f.append(el('label',{textContent:'Publicar no site'},[ck]));
+f.append(el('button',{className:'p',type:'submit',textContent:'Salvar vídeo',style:'justify-self:start'}));
+f.onsubmit=async function(e){e.preventDefault();var b=f.querySelector('.p');b.disabled=true;try{await api('PUT','/api/admin/videos/'+r.slot,v);msg('Vídeo salvo.');main()}catch(x){msg(x.message,1);b.disabled=false}};box.append(f)})}
 function pw(box){var f=el('form',{style:'max-width:420px'},[el('h2',{textContent:'Alterar senha',style:'margin:0'}),
 el('label',{textContent:'Senha atual'},[el('input',{id:'p0',type:'password',autocomplete:'current-password',required:true})]),
 el('label',{textContent:'Nova senha (mínimo 10 caracteres)'},[el('input',{id:'p1',type:'password',autocomplete:'new-password',required:true})]),

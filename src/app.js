@@ -52,6 +52,9 @@ app.get('/api/litters', async (req, res) => res.json(await db.rows(
 app.get('/api/gallery', async (req, res) => res.json(await db.rows('SELECT id,caption,category,photo FROM gallery WHERE published=1 ORDER BY id DESC')));
 app.get('/api/testimonials', async (req, res) => res.json(await db.rows('SELECT id,name,text,dog_name,photo FROM testimonials WHERE published=1 ORDER BY id DESC')));
 
+const content = require('./content')({ HttpError, log });
+app.use('/api', content.pub);
+
 // ---- autenticação
 const DUMMY = bcrypt.hashSync('x', 12);
 const cookieOpts = `HttpOnly; SameSite=Strict; Path=/${prod ? '; Secure' : ''}`;
@@ -83,17 +86,30 @@ const EXT = { 'image/jpeg': '.jpg', 'image/png': '.png', 'image/webp': '.webp' }
 const MAX_MB = 4; // limite de corpo das funções do Vercel é ~4,5 MB
 const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: MAX_MB * 1024 * 1024 },
   fileFilter: (q, f, cb) => cb(EXT[f.mimetype] ? null : new HttpError(422, 'Envie uma imagem JPG, PNG ou WebP.'), !!EXT[f.mimetype]) });
-adm.post('/upload', upload.single('file'), async (req, res) => {
-  if (!req.file) throw new HttpError(422, 'Selecione uma imagem.');
-  const name = crypto.randomBytes(12).toString('hex') + EXT[req.file.mimetype];
-  let url;
+async function store(file, ext, kind) {
+  const name = crypto.randomBytes(12).toString('hex') + ext;
   if (BLOB_READ_WRITE_TOKEN) {
     const { put } = require('@vercel/blob');
-    url = (await put('yannis/' + name, req.file.buffer, { access: 'public', contentType: req.file.mimetype, addRandomSuffix: false })).url;
-  } else if (VERCEL) throw new HttpError(503, 'Armazenamento de imagens não configurado (falta BLOB_READ_WRITE_TOKEN).');
-  else { await fs.mkdir(path.join(ROOT, 'uploads'), { recursive: true }); await fs.writeFile(path.join(ROOT, 'uploads', name), req.file.buffer); url = '/uploads/' + name; }
+    return (await put('yannis/' + name, file.buffer, { access: 'public', contentType: file.mimetype, addRandomSuffix: false })).url;
+  }
+  if (VERCEL) throw new HttpError(503, 'Armazenamento de arquivos não configurado (falta BLOB_READ_WRITE_TOKEN).');
+  await fs.mkdir(path.join(ROOT, 'uploads'), { recursive: true });
+  await fs.writeFile(path.join(ROOT, 'uploads', name), file.buffer);
+  return '/uploads/' + name;
+}
+adm.post('/upload', upload.single('file'), async (req, res) => {
+  if (!req.file) throw new HttpError(422, 'Selecione uma imagem.');
+  const url = await store(req.file, EXT[req.file.mimetype], 'image');
   await log(req, 'upload'); res.status(201).json({ url });
 });
+const VEXT = { 'video/mp4': '.mp4', 'video/webm': '.webm', 'video/quicktime': '.mov' };
+const vupload = multer({ storage: multer.memoryStorage(), limits: { fileSize: MAX_MB * 1024 * 1024 },
+  fileFilter: (q, f, cb) => cb(VEXT[f.mimetype] ? null : new HttpError(422, 'Envie um vídeo MP4, WebM ou MOV.'), !!VEXT[f.mimetype]) });
+adm.post('/upload-video', vupload.single('file'), async (req, res) => {
+  if (!req.file) throw new HttpError(422, 'Selecione um vídeo.');
+  res.status(201).json({ url: await store(req.file, VEXT[req.file.mimetype], 'video') });
+});
+adm.use(content.adm);
 const tb = t => { if (!Object.hasOwn(TABLES, t)) throw new HttpError(404, 'Recurso não encontrado.'); return t; };
 adm.get('/stats', async (req, res) => {
   const c = t => db.one(`SELECT COUNT(*)::int AS total, COALESCE(SUM(published),0)::int AS pub FROM ${t}`);
@@ -130,13 +146,18 @@ app.use('/api/admin', adm);
 // ---- SEO, páginas e estáticos
 app.get('/robots.txt', (q, r) => r.type('text/plain').send(`User-agent: *\nDisallow: /admin\nDisallow: /api/\nSitemap: ${BASE_URL}/sitemap.xml\n`));
 app.get('/sitemap.xml', async (q, r) => r.type('application/xml').send(`<?xml version="1.0" encoding="UTF-8"?><urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">${(await pages.urls()).map(u => `<url><loc>${BASE_URL}${u}</loc></url>`).join('')}</urlset>`));
+let homeTpl;
+app.get('/', async (q, r) => {
+  homeTpl = homeTpl || await fs.readFile(path.join(ROOT, 'views/index.html'), 'utf8');
+  r.set('Cache-Control', 'public, max-age=0, s-maxage=60, stale-while-revalidate=300').type('html').send(await pages.home(homeTpl));
+});
 app.get('/rottweilers', async (q, r) => r.send(await pages.dogs(String(q.query.sexo || ''))));
 app.get('/rottweilers/:id', async (q, r, n) => { const h = await pages.dog(Number(q.params.id) || 0); h ? r.send(h) : n(); });
 app.get('/filhotes', async (q, r) => r.send(await pages.litters()));
 app.get('/ninhadas/:id', async (q, r, n) => { const h = await pages.litter(Number(q.params.id) || 0); h ? r.send(h) : n(); });
 if (!VERCEL) app.use('/uploads', express.static(path.join(ROOT, 'uploads'), { maxAge: '7d', setHeaders: r => r.setHeader('X-Content-Type-Options', 'nosniff') }));
 app.use(express.static(path.join(ROOT, 'public'), { extensions: ['html'], maxAge: prod ? '1h' : 0 }));
-app.use((req, res) => req.path.startsWith('/api') ? res.status(404).json({ error: 'Rota não encontrada.' }) : res.status(404).sendFile(path.join(ROOT, 'public/404.html')));
+app.use((req, res) => req.path.startsWith('/api') ? res.status(404).json({ error: 'Rota não encontrada.' }) : res.status(404).sendFile(path.join(ROOT, 'views/404.html')));
 app.use((err, req, res, next) => {
   let s = err.status || 500, m = err.message;
   const PG = { 23505: [409, 'Já existe um registro com esses dados.'], 23503: [422, 'O cão escolhido não existe mais.'], 23514: [422, 'Algum valor informado é inválido.'], '22P02': [422, 'Algum dado está em formato inválido.'] };
