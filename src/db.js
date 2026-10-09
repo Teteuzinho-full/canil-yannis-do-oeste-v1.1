@@ -55,25 +55,40 @@ const MIGRATIONS = [[
 async function init() {
   const c = await pool.connect();
   try {
-    await c.query('SELECT pg_advisory_lock(727001)'); // evita corrida entre instâncias no cold start
+    await c.query('BEGIN');
+    // lock válido só dentro desta transação: seguro também com o pooler do Neon (pgbouncer)
+    await c.query('SELECT pg_advisory_xact_lock(727001)');
     await c.query('CREATE TABLE IF NOT EXISTS schema_migrations(version INTEGER PRIMARY KEY)');
     const { rows: r } = await c.query('SELECT COALESCE(MAX(version),0)::int AS v FROM schema_migrations');
     for (let v = r[0].v; v < MIGRATIONS.length; v++) {
-      await c.query('BEGIN');
-      try { for (const s of MIGRATIONS[v]) await (typeof s === 'function' ? s(c) : c.query(s)); await c.query('INSERT INTO schema_migrations(version) VALUES($1)', [v + 1]); await c.query('COMMIT'); }
-      catch (e) { await c.query('ROLLBACK'); throw e; }
+      for (const s of MIGRATIONS[v]) await (typeof s === 'function' ? s(c) : c.query(s));
+      await c.query('INSERT INTO schema_migrations(version) VALUES($1)', [v + 1]);
     }
     const { ADMIN_EMAIL, ADMIN_PASSWORD } = process.env;
     if (ADMIN_EMAIL && ADMIN_PASSWORD) {
       const { rowCount } = await c.query('SELECT 1 FROM users WHERE lower(email)=lower($1)', [ADMIN_EMAIL]);
       if (!rowCount) await c.query('INSERT INTO users(email,password_hash,role) VALUES($1,$2,$3)', [ADMIN_EMAIL.trim().toLowerCase(), bcrypt.hashSync(ADMIN_PASSWORD, 12), 'SUPER_ADMIN']);
     }
+    await c.query('COMMIT');
+  } catch (e) {
+    try { await c.query('ROLLBACK'); } catch { /* conexão já encerrada */ }
+    throw e;
   } finally {
-    try { await c.query('SELECT pg_advisory_unlock(727001)'); } catch { /* conexão já fechada */ }
     c.release();
   }
 }
+// Erros típicos de corrida entre instâncias no primeiro acesso: tenta de novo antes de falhar.
+const RETRY = new Set(['23505', '42P07', '40P01', '40001', '55P03']);
 let started;
-const ready = () => started || (started = init().catch(e => { started = null; throw e; }));
+const ready = () => started || (started = (async () => {
+  for (let i = 1; ; i++) {
+    try { return await init(); }
+    catch (e) {
+      if (i >= 4 || !RETRY.has(e.code)) { started = null; throw e; }
+      console.error(`[migração] tentativa ${i} falhou (${e.code}: ${e.message}); repetindo`);
+      await new Promise(r => setTimeout(r, 400 * i));
+    }
+  }
+})());
 
 module.exports = { query, rows, one, ready };

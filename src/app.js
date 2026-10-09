@@ -160,6 +160,7 @@ app.use(express.static(path.join(ROOT, 'public'), { extensions: ['html'], maxAge
 app.use((req, res) => req.path.startsWith('/api') ? res.status(404).json({ error: 'Rota não encontrada.' }) : res.status(404).sendFile(path.join(ROOT, 'views/404.html')));
 app.use((err, req, res, next) => {
   let s = err.status || 500, m = err.message;
+  if (!err.status || err.code) console.error('[erro]', req.method, req.originalUrl, err.code || '', err.message, err.detail || '', err.constraint || '');
   const PG = { 23505: [409, 'Já existe um registro com esses dados.'], 23503: [422, 'O cão escolhido não existe mais.'], 23514: [422, 'Algum valor informado é inválido.'], '22P02': [422, 'Algum dado está em formato inválido.'] };
   if (err.code === 'LIMIT_FILE_SIZE') { s = 422; m = `Imagem maior que ${MAX_MB} MB.`; }
   else if (PG[err.code]) [s, m] = PG[err.code];
