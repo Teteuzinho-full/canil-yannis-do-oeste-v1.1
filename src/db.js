@@ -44,11 +44,11 @@ const MIGRATIONS = [[
     'ALIMENTACAO','VACINACAO','SAUDE','VETERINARIO','PEDIGREE','MICROCHIPAGEM','PESSOAS'))`,
   async c => {
     const { SECTIONS, IMAGES, GALLERY, VIDEOS, C } = require('./seed-content');
-    for (const s of SECTIONS) await c.query('INSERT INTO site_content(slug,sort,title,subtitle,body,extra) VALUES($1,$2,$3,$4,$5,$6)', [s.slug, s.sort, s.title, s.subtitle, s.body, s.extra]);
+    for (const s of SECTIONS) await c.query('INSERT INTO site_content(slug,sort,title,subtitle,body,extra) VALUES($1,$2,$3,$4,$5,$6) ON CONFLICT (slug) DO NOTHING', [s.slug, s.sort, s.title, s.subtitle, s.body, s.extra]);
     let n = 0;
     for (const [slug, f, alt, cap, pub] of IMAGES) await c.query('INSERT INTO content_images(slug,url,alt,caption,sort,published) VALUES($1,$2,$3,$4,$5,$6)', [slug, `${C}${f}.webp`, alt, cap, (n += 10), pub]);
     for (const [f, cap, cat, pub] of GALLERY) await c.query('INSERT INTO gallery(caption,category,photo,published) VALUES($1,$2,$3,$4)', [cap, cat, `${C}${f}.webp`, pub]);
-    for (const v of VIDEOS) await c.query('INSERT INTO videos(slot,title,description,url,poster,published) VALUES($1,$2,$3,$4,$5,$6)', [v.slot, v.title, v.description, v.url, v.poster, v.published]);
+    for (const v of VIDEOS) await c.query('INSERT INTO videos(slot,title,description,url,poster,published) VALUES($1,$2,$3,$4,$5,$6) ON CONFLICT (slot) DO NOTHING', [v.slot, v.title, v.description, v.url, v.poster, v.published]);
   },
 ]];
 
@@ -62,12 +62,14 @@ async function init() {
     const { rows: r } = await c.query('SELECT COALESCE(MAX(version),0)::int AS v FROM schema_migrations');
     for (let v = r[0].v; v < MIGRATIONS.length; v++) {
       for (const s of MIGRATIONS[v]) await (typeof s === 'function' ? s(c) : c.query(s));
-      await c.query('INSERT INTO schema_migrations(version) VALUES($1)', [v + 1]);
+      await c.query('INSERT INTO schema_migrations(version) VALUES($1) ON CONFLICT DO NOTHING', [v + 1]);
     }
-    const { ADMIN_EMAIL, ADMIN_PASSWORD } = process.env;
-    if (ADMIN_EMAIL && ADMIN_PASSWORD) {
-      const { rowCount } = await c.query('SELECT 1 FROM users WHERE lower(email)=lower($1)', [ADMIN_EMAIL]);
-      if (!rowCount) await c.query('INSERT INTO users(email,password_hash,role) VALUES($1,$2,$3)', [ADMIN_EMAIL.trim().toLowerCase(), bcrypt.hashSync(ADMIN_PASSWORD, 12), 'SUPER_ADMIN']);
+    // Espaços e maiúsculas nas variáveis de ambiente não podem quebrar a criação do administrador.
+    const email = (process.env.ADMIN_EMAIL || '').trim().toLowerCase(), pw = (process.env.ADMIN_PASSWORD || '').trim();
+    if (email && pw) {
+      const u = await c.query('SELECT id FROM users WHERE lower(email)=$1', [email]);
+      if (!u.rowCount) await c.query('INSERT INTO users(email,password_hash,role) VALUES($1,$2,$3) ON CONFLICT (email) DO NOTHING', [email, bcrypt.hashSync(pw, 12), 'SUPER_ADMIN']);
+      else if (process.env.ADMIN_RESET_PASSWORD === '1') await c.query('UPDATE users SET password_hash=$1 WHERE id=$2', [bcrypt.hashSync(pw, 12), u.rows[0].id]); // use uma vez e remova a variável
     }
     await c.query('COMMIT');
   } catch (e) {
