@@ -142,6 +142,7 @@ exports.home = async tpl => {
   const { map: m, videos } = await loadContent();
   let n = 0; const alt = () => n++ % 2 === 1;
   const R = {};
+  R['video-canil'] = videoBlock('canil', videos.canil, { title: 'Conheça o Canil Yannis do Oeste', desc: 'Um olhar mais próximo sobre o Canil Yannis do Oeste.' }, alt());
   if (m.sobre) R.sobre = editorial(m.sobre, { alt: alt(), after: '<p style="margin-top:28px"><a class="ul" href="#s-equipe">Conheça quem está à frente do canil →</a></p>' });
   if (m.genetica) R.genetica = editorial(m.genetica, { alt: alt(), rev: true, after: '<div class="lin" role="img" aria-label="As famílias Timit-Tor (Sérvia) e vom Hause Edelstein (Croácia) são referências para a formação do plantel do Canil Yannis do Oeste"><span><img class="fl" src="/assets/flags/rs.svg" alt="" width="28" height="28">Timit-Tor</span><span><img class="fl" src="/assets/flags/hr.svg" alt="" width="28" height="28">vom Hause Edelstein</span><i></i><b>Plantel Yannis do Oeste</b></div>' });
   if (m.socios || m.darlan || m.bruna) {
@@ -155,8 +156,7 @@ exports.home = async tpl => {
   if (m.pedigree) R.pedigree = editorial(m.pedigree, { alt: alt(), after: '<p style="margin-top:28px"><a class="ul" href="/rottweilers">Ver o pedigree de cada Rottweiler →</a></p>' });
   if (m.microchipagem) R.microchipagem = editorial(m.microchipagem, { alt: alt(), rev: true });
   if (m.veterinario) R.veterinario = editorial(m.veterinario, { alt: alt() });
-  R.videos = videoBlock('canil', videos.canil, { title: 'Conheça o Canil Yannis do Oeste', desc: 'Um olhar mais próximo sobre o Canil Yannis do Oeste.' }, alt())
-    + videoBlock('filhotes', videos.filhotes, { title: 'Conheça nossos filhotes', desc: null }, alt());
+  R['video-filhotes'] = videoBlock('filhotes', videos.filhotes, { title: 'Conheça nossos filhotes', desc: null }, alt());
   return tpl.replace(/<!--SX:([\w-]+)-->/g, (x, k) => R[k] || '').replaceAll('%BASE_URL%', BASE);
 };
 
