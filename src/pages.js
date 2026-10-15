@@ -143,7 +143,7 @@ exports.home = async tpl => {
   let n = 0; const alt = () => n++ % 2 === 1;
   const R = {};
   if (m.sobre) R.sobre = editorial(m.sobre, { alt: alt(), after: '<p style="margin-top:28px"><a class="ul" href="#s-equipe">Conheça quem está à frente do canil →</a></p>' });
-  if (m.genetica) R.genetica = editorial(m.genetica, { alt: alt(), rev: true, after: '<div class="lin" role="img" aria-label="As famílias Timit-Tor e vom Hause Edelstein são referências para a formação do plantel do Canil Yannis do Oeste"><span>Timit-Tor</span><span>vom Hause Edelstein</span><i></i><b>Plantel Yannis do Oeste</b></div>' });
+  if (m.genetica) R.genetica = editorial(m.genetica, { alt: alt(), rev: true, after: '<div class="lin" role="img" aria-label="As famílias Timit-Tor (Sérvia) e vom Hause Edelstein (Croácia) são referências para a formação do plantel do Canil Yannis do Oeste"><span><img class="fl" src="/assets/flags/rs.svg" alt="" width="28" height="28">Timit-Tor</span><span><img class="fl" src="/assets/flags/hr.svg" alt="" width="28" height="28">vom Hause Edelstein</span><i></i><b>Plantel Yannis do Oeste</b></div>' });
   if (m.socios || m.darlan || m.bruna) {
     const s = m.socios || { title: 'Quem está à frente do canil', body: '' };
     R.equipe = `<section id="s-equipe" class="sx${alt() ? ' alt' : ''}"><div class="wrap"><div class="sxt c"><p class="eb">Pessoas</p><h2>${esc(s.title)}</h2></div><div class="team">${m.darlan ? person(m.darlan, 'D') : ''}${m.bruna ? person(m.bruna, 'B') : ''}</div>${s.body ? `<div class="sxt c" style="margin-top:40px"><div class="paras">${para(s.body)}</div></div>` : ''}</div></section>`;
