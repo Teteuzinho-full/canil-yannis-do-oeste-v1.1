@@ -145,3 +145,7 @@ footer{border-top:1px solid var(--line);padding:56px 0 calc(56px + 70px);font-si
 .pt img{mix-blend-mode:normal}
 @media(max-width:900px){#fl{flex-wrap:nowrap;overflow-x:auto;padding-bottom:8px;margin-right:calc(-1 * clamp(20px,5vw,56px));padding-right:20px;-webkit-overflow-scrolling:touch;scrollbar-width:none}#fl::-webkit-scrollbar{display:none}#fl .chip{flex:0 0 auto}}
 @media(max-width:900px){.pt li:last-child{grid-column:1/-1}}
+
+/* bandeiras (circle-flags, MIT) nos nomes das famílias de referência */
+.lin span{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px}
+.lin .fl{display:block;width:28px;height:28px;border-radius:50%;box-shadow:0 0 0 1px rgba(200,169,107,.6),0 0 0 4px rgba(200,169,107,.12)}
