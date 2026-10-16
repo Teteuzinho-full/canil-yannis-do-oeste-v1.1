@@ -13,13 +13,13 @@ const who = d => (d ? (d.published ? `<a class="ul" href="/rottweilers/${d.id}">
 const img = (src, alt, cls = '') => (src ? `<img ${cls ? `class="${cls}" ` : ''}src="${esc(src)}" alt="${esc(alt)}" loading="lazy">` : '');
 
 const CSS = `.pg{padding:calc(68px + 40px) 0 120px}.crumb{font-size:.82rem;color:var(--mut);margin-bottom:28px}.crumb a:hover{color:var(--gold)}
-.hero2{display:grid;grid-template-columns:1.05fr .95fr;gap:clamp(28px,6vw,80px);align-items:start}.hero2>div:first-child img,.hero2>div:first-child .ph{width:100%;aspect-ratio:4/5;object-fit:cover;border:1px solid var(--line)}
-.big{font-size:clamp(3.2rem,9vw,7rem);line-height:.95;margin-bottom:24px}.facts{display:grid;grid-template-columns:auto 1fr;gap:10px 28px;margin:0 0 28px}.facts dt{color:var(--mut)}.facts dd{margin:0}
+.hero2{display:grid;grid-template-columns:minmax(0,1.05fr) minmax(0,.95fr);gap:clamp(28px,6vw,80px);align-items:start}.hero2>div:first-child img,.hero2>div:first-child .ph{width:100%;aspect-ratio:4/5;object-fit:cover;border:1px solid var(--line)}
+.big{overflow-wrap:anywhere;font-size:clamp(3.2rem,9vw,7rem);line-height:.95;margin-bottom:24px}.facts{display:grid;grid-template-columns:auto 1fr;gap:10px 28px;margin:0 0 28px}.facts dt{color:var(--mut)}.facts dd{margin:0}
 .ped{display:grid;grid-template-columns:1fr 1fr;gap:16px}.ped>div{border:1px solid var(--line);background:var(--k2);padding:18px;display:grid;gap:4px}.ped small,.mut{color:var(--mut)}.ped b{font:500 1.5rem var(--serif)}
 .cta-fix{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(18px + env(safe-area-inset-bottom,0px));z-index:45;box-shadow:0 12px 40px rgba(0,0,0,.6)}
 .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,300px),1fr));gap:20px}.sec{margin-top:56px}.sec h2{font-size:2.2rem;margin-bottom:22px}
 a.dc,a.card{display:flex}a.card{flex-direction:column}a.dc .mut{position:absolute;top:20px;left:24px}
-@media(max-width:900px){.hero2{grid-template-columns:1fr}.ped{grid-template-columns:1fr}.cta-fix{width:calc(100% - 28px);justify-content:center}}`;
+@media(max-width:900px){.hero2{grid-template-columns:minmax(0,1fr)}.ped{grid-template-columns:1fr}.cta-fix{width:calc(100% - 28px);justify-content:center}}`;
 
 function layout({ title, desc, path, image, crumbs, body, cta }) {
   image = image || '/assets/img/og.jpg';
@@ -135,14 +135,14 @@ function videoBlock(slot, v, fb, alt) {
   if (yt) frame = `<iframe src="https://www.youtube-nocookie.com/embed/${yt[1]}" title="${esc(title)}" loading="lazy" allow="encrypted-media; picture-in-picture; fullscreen" allowfullscreen referrerpolicy="strict-origin-when-cross-origin"></iframe>`;
   else if (vm) frame = `<iframe src="https://player.vimeo.com/video/${vm[1]}" title="${esc(title)}" loading="lazy" allow="picture-in-picture; fullscreen" allowfullscreen></iframe>`;
   else if (v?.url) frame = `<video controls preload="none" playsinline ${v.poster ? `poster="${esc(v.poster)}"` : ''} aria-label="${esc(title)}"><source src="${esc(v.url)}">Seu navegador não reproduz este vídeo. <a href="${esc(v.url)}">Abrir o vídeo</a></video>`;
-  return `<section id="s-video-${slot}" class="sx vsec${alt ? ' alt' : ''}"><div class="wrap"><div class="sxt c"><p class="eb">Vídeo</p><h2>${esc(title)}</h2>${desc ? `<p class="sub">${esc(desc)}</p>` : ''}</div>${frame ? `<div class="vf">${frame}</div>` : '<div class="vf soon"><div><b>Vídeo em breve.</b></div></div>'}</div></section>`;
+  return `<section id="s-video-${slot}" class="sx vsec${alt ? ' alt' : ''}"><div class="wrap"><div class="sxt c"><p class="eb">Vídeo</p><h2>${esc(title)}</h2>${desc ? `<p class="sub">${esc(desc)}</p>` : ''}</div>${frame ? `<div class="vf">${frame}</div>` : `<div class="vf soon"><div><b>${esc(fb.soon || 'Vídeo em breve.')}</b></div></div>`}</div></section>`;
 }
 
 exports.home = async tpl => {
   const { map: m, videos } = await loadContent();
   let n = 0; const alt = () => n++ % 2 === 1;
   const R = {};
-  R['video-canil'] = videoBlock('canil', videos.canil, { title: 'Conheça o Canil Yannis do Oeste', desc: 'Um olhar mais próximo sobre o Canil Yannis do Oeste.' }, alt());
+  R['video-canil'] = videoBlock('canil', videos.canil, { title: 'Conheça o Canil Yannis do Oeste', desc: 'Um olhar mais próximo sobre o Canil Yannis do Oeste.', soon: 'Em breve teremos um novo vídeo.' }, alt());
   if (m.sobre) R.sobre = editorial(m.sobre, { alt: alt(), after: '<p style="margin-top:28px"><a class="ul" href="#s-equipe">Conheça quem está à frente do canil →</a></p>' });
   if (m.genetica) R.genetica = editorial(m.genetica, { alt: alt(), rev: true, after: '<div class="lin" role="img" aria-label="As famílias Timit-Tor (Sérvia) e vom Hause Edelstein (Croácia) são referências para a formação do plantel do Canil Yannis do Oeste"><span><img class="fl" src="/assets/flags/rs.svg" alt="" width="28" height="28">Timit-Tor</span><span><img class="fl" src="/assets/flags/hr.svg" alt="" width="28" height="28">vom Hause Edelstein</span><i></i><b>Plantel Yannis do Oeste</b></div>' });
   if (m.socios || m.darlan || m.bruna) {
@@ -157,7 +157,12 @@ exports.home = async tpl => {
   if (m.microchipagem) R.microchipagem = editorial(m.microchipagem, { alt: alt(), rev: true });
   if (m.veterinario) R.veterinario = editorial(m.veterinario, { alt: alt() });
   R['video-filhotes'] = videoBlock('filhotes', videos.filhotes, { title: 'Conheça nossos filhotes', desc: null }, alt());
-  return tpl.replace(/<!--SX:([\w-]+)-->/g, (x, k) => R[k] || '').replaceAll('%BASE_URL%', BASE);
+  R.videos = R['video-canil'] + R['video-filhotes']; // compatível com o marcador antigo do modelo
+  let html = tpl.replace(/<!--SX:([\w-]+)-->/g, (x, k) => R[k] || '').replaceAll('%BASE_URL%', BASE);
+  // Rede de segurança: se o modelo não tiver os marcadores dos vídeos, eles entram nos lugares certos.
+  if (!html.includes('id="s-video-canil"')) html = html.replace(/(<div class="strip">[\s\S]*?<\/ul><\/div><\/div>)/, (m0) => m0 + '\n' + R['video-canil']);
+  if (!html.includes('id="s-video-filhotes"')) html = html.replace('<section class="band"', () => R['video-filhotes'] + '\n<section class="band"');
+  return html;
 };
 
 exports.urls = async () => ['/', '/rottweilers', '/filhotes',
