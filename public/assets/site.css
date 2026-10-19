@@ -102,7 +102,7 @@ footer{border-top:1px solid var(--line);padding:56px 0 calc(56px + 70px);font-si
 .team{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,320px),1fr));gap:clamp(24px,5vw,56px);max-width:960px;margin:0 auto}
 .pc{display:grid;gap:12px;align-content:start}.pf .lbx,.pf .mono{aspect-ratio:4/5}.mono{display:grid;place-items:center;border:1px solid var(--line);background:linear-gradient(160deg,var(--k3),#0d0d0d);font:500 6rem var(--serif);color:var(--gold)}
 .pc .role{font:700 .72rem var(--sans);letter-spacing:.14em;text-transform:uppercase;color:var(--gold)}
-.lin{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:32px;max-width:460px}.lin span,.lin b{padding:14px 12px;border:1px solid var(--line);background:var(--k3);text-align:center;font:500 1.2rem var(--serif)}
+.lin{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:32px;max-width:460px}.lin>span,.lin b{padding:14px 12px;border:1px solid var(--line);background:var(--k3);text-align:center;font:500 1.2rem var(--serif)}
 .lin i{grid-column:1/-1;height:34px;width:1px;background:var(--gold);justify-self:center;opacity:.7}.lin b{grid-column:1/-1;border-color:var(--gold);color:var(--gold);font-weight:500}
 .vsec .vf{max-width:760px;margin:0 auto;border:1px solid var(--line);background:#000}.vf video,.vf iframe{display:block;width:100%;max-height:80vh;border:0}.vf iframe{aspect-ratio:16/9}.vf video{object-fit:contain;aspect-ratio:auto}
 .vf.soon{aspect-ratio:16/9;display:grid;place-items:center;background:linear-gradient(160deg,var(--k3),#0d0d0d);text-align:center;color:var(--mut)}.vf.soon b{font:500 1.6rem var(--serif);color:var(--cream)}
@@ -147,5 +147,43 @@ footer{border-top:1px solid var(--line);padding:56px 0 calc(56px + 70px);font-si
 @media(max-width:900px){.pt li:last-child{grid-column:1/-1}}
 
 /* bandeiras (circle-flags, MIT) nos nomes das famílias de referência */
-.lin span{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px}
+.lin>span{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px}
 .lin .fl{display:block;width:28px;height:28px;border-radius:50%;box-shadow:0 0 0 1px rgba(200,169,107,.6),0 0 0 4px rgba(200,169,107,.12)}
+
+/* robustez de layout: grades nunca se expandem por causa de imagem ou palavra longa */
+.sxg{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}.sxg.one{grid-template-columns:minmax(0,760px)}
+.split{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}
+.sxt h2,.sxt .sub,.paras p,.pc p,.pc h3{overflow-wrap:break-word}
+@media(max-width:900px){.sxg,.split{grid-template-columns:minmax(0,1fr)}
+ a.ul{display:inline-block;padding:12px 0;background-position:0 calc(100% - 9px)}}
+/* telas muito grandes: conteúdo e tipografia acompanham a tela */
+@media(min-width:1800px){html{font-size:112.5%}.wrap{max-width:1500px}}
+@media(min-width:2400px){html{font-size:125%}.wrap{max-width:1760px}}
+@media(min-width:1800px){.hx-c{max-width:880px}}
+@media(min-width:901px){.hx-ph::after{inset:0 0 0 -2px}}
+
+/* ---- cards premium das famílias de referência (Sérvia e Croácia) ---- */
+.lin{grid-template-columns:minmax(0,1fr);max-width:none;margin-top:36px}
+.fcs{grid-column:1/-1;container-type:inline-size}
+.fcs-g{display:grid;grid-template-columns:minmax(0,1fr);gap:14px}
+@container (min-width:520px){.fcs-g{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}}
+.fc{position:relative;display:block;container-type:inline-size;aspect-ratio:967/517;border-radius:18px;overflow:hidden;isolation:isolate;background:#050505;color:#ecd9b0;text-decoration:none;-webkit-tap-highlight-color:transparent;
+ box-shadow:0 0 0 1px rgba(200,169,107,.14),0 0 30px rgba(200,169,107,.09),0 22px 44px rgba(0,0,0,.6);transition:box-shadow .4s,transform .4s}
+.fc::before{content:"";position:absolute;inset:0;border-radius:inherit;padding:1.3px;z-index:3;pointer-events:none;
+ background:linear-gradient(180deg,#f3dfae 0,#caa762 38%,#7d5f2e 72%,#c9a65f 100%);
+ -webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);-webkit-mask-composite:xor;mask:linear-gradient(#000 0 0) content-box exclude,linear-gradient(#000 0 0)}
+.fc::after{content:"";position:absolute;inset:0;z-index:1;pointer-events:none;
+ background:linear-gradient(180deg,rgba(3,3,3,.94) 0,rgba(3,3,3,.8) 34%,rgba(3,3,3,.22) 60%,rgba(3,3,3,0) 80%),radial-gradient(120% 90% at 50% 100%,transparent 55%,rgba(0,0,0,.5) 100%)}
+.fc-bg{position:absolute;inset:auto 0 0 0;height:63%;z-index:0;background:var(--bg) center bottom/cover no-repeat;transition:transform .9s cubic-bezier(.2,.7,.2,1)}
+.fc-row{position:absolute;z-index:2;left:7.2cqw;top:7.6cqw;right:3cqw;display:flex;align-items:center;gap:3.2cqw}
+.fc-fw{position:relative;flex:0 0 auto;width:15.9cqw;height:11.4cqw;border-radius:1.4cqw;overflow:hidden;box-shadow:0 .7cqw 1.8cqw rgba(0,0,0,.7),0 0 0 .15cqw rgba(255,255,255,.2)}
+.fc-fw img{display:block;width:100%;height:100%;object-fit:cover}
+.fc-fw::after{content:"";position:absolute;inset:0;background:linear-gradient(150deg,rgba(255,255,255,.34) 0,rgba(255,255,255,0) 44%,rgba(0,0,0,.2) 100%)}
+.fc-sep{flex:0 0 auto;width:1px;height:11.8cqw;margin:0 .5cqw;background:linear-gradient(180deg,rgba(217,184,120,0),#d9b878 22%,#d9b878 78%,rgba(217,184,120,0))}
+.fc-txt{display:flex;flex-direction:column;gap:1cqw;min-width:0}
+.fc-name{font:500 max(1.05rem,7.2cqw)/1.04 var(--serif);color:#ecd9b0;text-shadow:0 1px 16px rgba(0,0,0,.75);text-wrap:balance}
+.fc-cty{font:600 max(.62rem,3.4cqw)/1 var(--sans);letter-spacing:.34em;text-transform:uppercase;color:#cdb27a}
+.fc:hover{transform:translateY(-2px);box-shadow:0 0 0 1px rgba(200,169,107,.3),0 0 38px rgba(200,169,107,.17),0 24px 46px rgba(0,0,0,.62)}
+.fc:hover .fc-bg{transform:scale(1.04)}
+.fc:focus-visible{outline:2px solid var(--gold);outline-offset:4px}
+@media(prefers-reduced-motion:reduce){.fc,.fc-bg{transition:none}.fc:hover,.fc:hover .fc-bg{transform:none}}
