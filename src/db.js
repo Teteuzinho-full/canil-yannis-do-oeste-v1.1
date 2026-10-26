@@ -50,6 +50,18 @@ const MIGRATIONS = [[
     for (const [f, cap, cat, pub] of GALLERY) await c.query('INSERT INTO gallery(caption,category,photo,published) VALUES($1,$2,$3,$4)', [cap, cat, `${C}${f}.webp`, pub]);
     for (const v of VIDEOS) await c.query('INSERT INTO videos(slot,title,description,url,poster,published) VALUES($1,$2,$3,$4,$5,$6) ON CONFLICT (slot) DO NOTHING', [v.slot, v.title, v.description, v.url, v.poster, v.published]);
   },
+], [
+  'ALTER TABLE dogs ADD COLUMN IF NOT EXISTS details TEXT',
+  'ALTER TABLE dogs ADD COLUMN IF NOT EXISTS video TEXT',
+  'ALTER TABLE dogs ADD COLUMN IF NOT EXISTS video_poster TEXT',
+  'ALTER TABLE dogs ADD COLUMN IF NOT EXISTS pedigree_image TEXT',
+  async c => {
+    const { SAVANA: s } = require('./seed-content');
+    await c.query(`INSERT INTO dogs(name,sex,birth_date,pedigree,description,photo,details,video,video_poster,pedigree_image,published)
+      SELECT $1::text,$2::text,$3::text,$4::text,$5::text,$6::text,$7::text,$8::text,$9::text,$10::text,1
+      WHERE NOT EXISTS (SELECT 1 FROM dogs WHERE lower(name)='savana')`,
+      [s.name, s.sex, s.birth_date, s.pedigree, s.description, s.photo, s.details, s.video, s.video_poster, s.pedigree_image]);
+  },
 ]];
 
 async function init() {

@@ -69,4 +69,39 @@ const VIDEOS = [
   { slot: 'canil', title: 'Conheça o Canil Yannis do Oeste', description: 'Um olhar mais próximo sobre o Canil Yannis do Oeste.', url: null, poster: null, published: 0 },
   { slot: 'filhotes', title: 'Conheça nossos filhotes', description: null, url: '/assets/video/filhotes.mp4', poster: '/assets/video/filhotes-poster.webp', published: 1 },
 ];
-module.exports = { SECTIONS, IMAGES, GALLERY, VIDEOS, C };
+
+// Rottweiler fêmea Savana: dados transcritos do pedigree CBKC fornecido pelo canil.
+const SAVANA = {
+  name: 'Savana', sex: 'FEMEA', birth_date: '2026-04-15', pedigree: 'Pedigree CBKC',
+  description: 'Fêmea preta e castanha, nascida em 15 de abril de 2026.',
+  photo: '/assets/dogs/savana.webp', video: '/assets/dogs/savana.mp4', video_poster: '/assets/dogs/savana-poster.webp', pedigree_image: '/assets/dogs/savana-pedigree.webp',
+  details: `## Ficha técnica
+- Nome no pedigree: BR SECURITY SPECIAL SAVANA
+- Raça: Rottweiler
+- Sexo: Fêmea
+- Pelagem: preto e castanho
+- Nascimento: 15/04/2026
+- Registro: pedigree CBKC, membro da FCI, emitido em 14/08/2026
+- Identificação: microchip, conforme consta no pedigree
+
+## Sobre o pedigree
+O pedigree emitido pela CBKC, entidade integrante da FCI, documenta a identidade e a genealogia da Savana em três gerações: pais, avós e bisavós. Cada ancestral aparece com nome, número de registro e, quando informado, a pelagem. A imagem do documento está logo abaixo.
+
+## Linha paterna
+- Pai: VON FRANCO'S BRASIL KHAN
+- Avô paterno: HUMMER TIMIT-THOR BRASIL
+- Pais do avô paterno: SECER TIMIT-TOR e VALKYRIE FROM ROYAL BREED
+- Avó paterna: VERONA VON HAUS FAMILIEN WAPPEN
+- Pais da avó paterna: LEXX JUNIOR MONTAGNA e PRADA VON ERSTER BLICK
+
+## Linha materna
+- Mãe: LENNA VOM HAUS RADUNOVIC
+- Avô materno: HECTOR VON HAUSE PISTA
+- Pais do avô materno: PYTHON VOM HAUSE e MANTA VON HAUSE PISTA
+- Avó materna: SIR PREKA'S RENIRA
+- Pais da avó materna: MONSTER VOM HAUS RADUNOVIC e SIR PREKA'S NIKITA
+
+Na linha paterna aparecem nomes da família Timit-Tor (Hummer Timit-Thor Brasil e Secer Timit-Tor), uma das bases genéticas citadas pelo canil.`,
+};
+
+module.exports = { SAVANA, SECTIONS, IMAGES, GALLERY, VIDEOS, C };

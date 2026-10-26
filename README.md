@@ -22,6 +22,10 @@ O texto oficial e as imagens fornecidas entram como **semente** na migration 2 (
 Galeria: categorias novas — Alimentação, Vacinação, Saúde, Veterinário, Pedigree, Microchipagem e Pessoas.
 API: `GET /api/content`; admin: `GET /api/admin/content`, `PUT /api/admin/content/:slug`, `POST /api/admin/content/:slug/images`, `PUT|DELETE /api/admin/content/images/:id`, `POST /api/admin/content/images/:id/move`, `GET /api/admin/videos`, `PUT /api/admin/videos/:slot`, `POST /api/admin/upload-video`.
 
+## Página /rottweilers e card "Saiba mais"
+Todos os botões "Rottweilers" do site levam a `/rottweilers`: introdução curta e, para cada cão publicado, foto, legenda e o botão **Saiba mais**, que abre um card grande com foto, vídeo, texto técnico e imagem do pedigree (com um único cão, ele aparece em destaque; com vários, em grade). `/rottweilers#dog-ID` abre o card direto.
+No painel (aba Rottweilers) cada cão tem: **Legenda curta** (aparece no card), **Detalhes técnicos** (use `## Título` para seções e `- Item: valor` para listas), **Vídeo** (link do YouTube/Vimeo/arquivo ou envio de até 4 MB), **Miniatura do vídeo** e **Imagem do pedigree**. A migration 3 cria essas colunas e cadastra a Savana (dados transcritos do pedigree CBKC fornecido).
+
 ## Páginas públicas (com SEO)
 `/rottweilers` (`?sexo=macho|femea`), `/rottweilers/:id`, `/filhotes`, `/ninhadas/:id`: title, description, canonical, Open Graph, Twitter Card, breadcrumbs e JSON-LD; todas no `/sitemap.xml`. Itens não publicados dão 404.
 

@@ -19,9 +19,41 @@ const CSS = `.pg{padding:calc(68px + 40px) 0 120px}.crumb{font-size:.82rem;color
 .cta-fix{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(18px + env(safe-area-inset-bottom,0px));z-index:45;box-shadow:0 12px 40px rgba(0,0,0,.6)}
 .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,300px),1fr));gap:20px}.sec{margin-top:56px}.sec h2{font-size:2.2rem;margin-bottom:22px}
 a.dc,a.card{display:flex}a.card{flex-direction:column}a.dc .mut{position:absolute;top:20px;left:24px}
-@media(max-width:900px){.hero2{grid-template-columns:minmax(0,1fr)}.ped{grid-template-columns:1fr}.cta-fix{width:calc(100% - 28px);justify-content:center}}`;
+@media(max-width:900px){.hero2{grid-template-columns:minmax(0,1fr)}.ped{grid-template-columns:1fr}.cta-fix{width:calc(100% - 28px);justify-content:center}}
+.intro{max-width:60ch;margin:0 0 28px;font-size:1.05rem}
+.feat{display:grid;grid-template-columns:minmax(0,.85fr) minmax(0,1.15fr);gap:clamp(24px,5vw,72px);align-items:center;margin-top:40px}
+.feat-ph img,.feat-ph .ph{display:block;width:100%;height:auto;aspect-ratio:4/5;object-fit:cover;border-radius:18px;border:1px solid rgba(200,169,107,.4);box-shadow:0 24px 60px rgba(0,0,0,.55)}
+.feat-tx h2{font-size:clamp(2.8rem,7vw,5.6rem);line-height:.95;margin:0 0 14px;overflow-wrap:anywhere}
+.feat .sub,.dm-h .sub{font:italic 500 1.35rem/1.35 var(--serif);color:var(--gold);max-width:34ch;margin:0 0 28px}
+.grid2{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,300px),1fr));gap:24px;margin-top:32px}
+.tile{display:grid;align-content:start;border:1px solid var(--line);background:var(--k2);border-radius:16px;overflow:hidden}.tile img{display:block;width:100%;aspect-ratio:4/5;object-fit:cover}.tile .b{padding:20px;display:grid;gap:10px}.tile h3{overflow-wrap:anywhere}
+dialog.dm{padding:0;border:1px solid rgba(200,169,107,.5);border-radius:20px;background:#0e0e0e;color:var(--cream);width:min(1180px,94vw);max-width:none;height:min(92vh,2000px);max-height:92vh;box-shadow:0 30px 90px rgba(0,0,0,.8);overflow:hidden}
+dialog.dm[open]{display:flex;flex-direction:column;animation:dmin .35s cubic-bezier(.2,.7,.2,1)}
+dialog.dm::backdrop{background:rgba(0,0,0,.82);backdrop-filter:blur(4px)}
+@keyframes dmin{from{opacity:0;transform:translateY(18px) scale(.985)}}
+.dm-bar{flex:0 0 auto;display:flex;justify-content:space-between;align-items:center;gap:12px;padding:10px 14px 10px 24px;border-bottom:1px solid var(--line);background:#0e0e0e}
+.dm-bt{font:700 .7rem var(--sans);letter-spacing:.22em;text-transform:uppercase;color:var(--gold)}
+.dm-x{min-height:44px;padding:0 22px;background:none;border:1px solid var(--gold);color:var(--cream);font:700 .72rem var(--sans);letter-spacing:.14em;text-transform:uppercase;cursor:pointer;border-radius:999px;transition:background .25s}.dm-x:hover{background:rgba(200,169,107,.15)}
+.dm-body{flex:1 1 auto;overflow:auto;overscroll-behavior:contain;-webkit-overflow-scrolling:touch}
+.dm-in{padding:clamp(20px,4vw,48px)}
+.dm-h{margin-bottom:28px}.dm-h h2{font-size:clamp(2.6rem,6vw,4.8rem);line-height:.95;margin:0 0 14px;overflow-wrap:anywhere}
+.dm-g{display:grid;grid-template-columns:minmax(0,.8fr) minmax(0,1.2fr);gap:clamp(24px,4vw,56px);align-items:start}
+.dm-l{display:grid;gap:20px;min-width:0}.dm-r{min-width:0}
+.dm-f{margin:0}.dm-f img{display:block;width:100%;height:auto;border-radius:14px;border:1px solid var(--line)}
+.dm-v{margin:0}.dm-v video,.dm-v iframe{display:block;width:100%;max-height:70vh;border-radius:14px;background:#000;border:0}.dm-v iframe{aspect-ratio:16/9}
+.dm-v figcaption,.dm-p figcaption{font-size:.8rem;color:var(--mut);margin-top:8px}
+.dm-t h3{font:500 1.7rem/1.1 var(--serif);margin:28px 0 12px;color:var(--cream)}.dm-t h3:first-child{margin-top:0}
+.dm-t p{margin:0 0 12px;max-width:62ch;overflow-wrap:break-word}
+.rl{list-style:none;margin:0 0 6px;padding:0;display:grid;gap:8px}.rl li{padding:10px 14px;border-left:2px solid var(--gold);background:rgba(244,240,232,.04);color:var(--mut);font-size:.95rem;line-height:1.45;overflow-wrap:anywhere}.rl b{color:var(--cream);font-weight:600}
+.dm-p{margin:30px 0 0}.dm-p img{display:block;width:100%;max-width:640px;height:auto;border-radius:10px;border:1px solid var(--line);background:#fff}
+.dm-p a.ul{margin-top:6px}
+.dm-cta{margin:32px 0 0}.dm-flat{margin-top:56px}
+html.dm-lock{overflow:hidden}
+@media(max-width:900px){.feat{grid-template-columns:minmax(0,1fr)}.dm-g{grid-template-columns:minmax(0,1fr)}}
+@media(max-width:700px){.dm-bt{font-size:.62rem;letter-spacing:.14em}dialog.dm{width:100%;max-width:100%;height:100%;height:100dvh;max-height:100%;border-radius:0;border:0}.dm-bar{padding:8px 12px 8px 16px}.dm-in{padding:18px 16px 44px}}
+@media(prefers-reduced-motion:reduce){dialog.dm[open]{animation:none}}`;
 
-function layout({ title, desc, path, image, crumbs, body, cta }) {
+function layout({ title, desc, path, image, crumbs, body, cta, script }) {
   image = image || '/assets/img/og.jpg';
   const url = BASE + path;
   const bc = { '@context': 'https://schema.org', '@type': 'BreadcrumbList',
@@ -39,8 +71,55 @@ function layout({ title, desc, path, image, crumbs, body, cta }) {
 <nav aria-label="Principal"><ul><li><a class="ul" href="/rottweilers">Rottweilers</a></li><li><a class="ul" href="/filhotes">Filhotes</a></li><li><a class="ul" href="/#contato">Contato</a></li></ul></nav></div></header>
 <main class="pg"><div class="wrap"><nav class="crumb" aria-label="Você está em">${crumbs.map((c, i) => i < crumbs.length - 1 ? `<a href="${c[1]}">${esc(c[0])}</a> › ` : `<span aria-current="page">${esc(c[0])}</span>`).join('')}</nav>${body}</div></main>
 ${cta ? `<a class="btn fill cta-fix" href="${esc(cta[1])}" target="_blank" rel="noopener">${esc(cta[0])} <i>→</i></a>` : ''}
-<footer><div class="wrap"><div><p>Yannis do Oeste Rottweilers<br>Concórdia — SC</p></div><ul><li><a class="ul" href="/rottweilers">Rottweilers</a></li><li><a class="ul" href="/filhotes">Filhotes</a></li></ul><ul><li><a class="ul" href="https://instagram.com/yannisdooeste" target="_blank" rel="noopener">Instagram</a></li><li>© 2026 Yannis do Oeste</li></ul></div></footer></body></html>`;
+<footer><div class="wrap"><div><p>Yannis do Oeste Rottweilers<br>Concórdia — SC</p></div><ul><li><a class="ul" href="/rottweilers">Rottweilers</a></li><li><a class="ul" href="/filhotes">Filhotes</a></li></ul><ul><li><a class="ul" href="https://instagram.com/yannisdooeste" target="_blank" rel="noopener">Instagram</a></li><li>© 2026 Yannis do Oeste</li></ul></div></footer>${script ? `<script>${script}</script>` : ''}</body></html>`;
 }
+
+
+// ---------- detalhes do cão (card grande e página do cão) ----------
+const BOLD = /^([^:]{1,40}):\s+(.+)$/;
+function rich(text) {
+  return String(text || '').split(/\n{2,}/).map(b => b.trim()).filter(Boolean).map(b => {
+    const lines = b.split('\n').map(l => l.trim()).filter(Boolean);
+    let html = '';
+    if (lines[0].startsWith('## ')) html += `<h3>${esc(lines.shift().slice(3))}</h3>`;
+    if (lines.length && lines.every(l => l.startsWith('- ')))
+      html += `<ul class="rl">${lines.map(l => { const t = l.slice(2), m = BOLD.exec(t); return `<li>${m ? `<b>${esc(m[1])}:</b> ${esc(m[2])}` : esc(t)}</li>`; }).join('')}</ul>`;
+    else html += lines.map(l => `<p>${esc(l)}</p>`).join('');
+    return html;
+  }).join('');
+}
+function frameFor(url, poster, title) {
+  if (!url) return '';
+  const yt = /^https:\/\/(?:www\.)?(?:youtube\.com\/watch\?v=|youtu\.be\/)([\w-]{11})/.exec(url), vm = /^https:\/\/(?:www\.)?vimeo\.com\/(\d+)/.exec(url);
+  if (yt) return `<iframe src="https://www.youtube-nocookie.com/embed/${yt[1]}" title="${esc(title)}" loading="lazy" allow="encrypted-media; picture-in-picture; fullscreen" allowfullscreen referrerpolicy="strict-origin-when-cross-origin"></iframe>`;
+  if (vm) return `<iframe src="https://player.vimeo.com/video/${vm[1]}" title="${esc(title)}" loading="lazy" allow="picture-in-picture; fullscreen" allowfullscreen></iframe>`;
+  return `<video controls preload="none" playsinline ${poster ? `poster="${esc(poster)}"` : ''} aria-label="${esc(title)}"><source src="${esc(url)}">Seu navegador não reproduz este vídeo. <a href="${esc(url)}">Abrir o vídeo</a></video>`;
+}
+function detailBlocks(d, { photo = true } = {}) {
+  const left = (photo && d.photo ? `<figure class="dm-f"><img src="${esc(d.photo)}" alt="Rottweiler ${esc(d.name)}" loading="lazy" decoding="async"></figure>` : '')
+    + (d.video ? `<figure class="dm-v">${frameFor(d.video, d.video_poster, 'Vídeo de ' + d.name)}<figcaption>Vídeo — ${esc(d.name)}</figcaption></figure>` : '');
+  const right = (d.details ? `<div class="dm-t">${rich(d.details)}</div>` : '')
+    + (d.pedigree_image ? `<figure class="dm-p"><a href="${esc(d.pedigree_image)}" target="_blank" rel="noopener" aria-label="Abrir o pedigree de ${esc(d.name)} em tamanho original"><img src="${esc(d.pedigree_image)}" alt="Imagem do pedigree de ${esc(d.name)}" loading="lazy" decoding="async"></a><figcaption>Pedigree de ${esc(d.name)}. <a class="ul" href="${esc(d.pedigree_image)}" target="_blank" rel="noopener">Abrir em tamanho original</a></figcaption></figure>` : '');
+  return { left, right, any: !!(left || right) };
+}
+const hasMore = d => !!(d.details || d.video || d.pedigree_image);
+const eyebrow = d => [SEX[d.sex], d.pedigree].filter(Boolean).join(' · ');
+const moreBtn = d => hasMore(d) ? `<a class="btn fill" href="/rottweilers/${d.id}" data-open="m-${d.id}">Saiba mais</a>` : `<a class="btn" href="/rottweilers/${d.id}">Ver detalhes</a>`;
+const dogFeat = d => `<article class="feat" id="dog-${d.id}"><div class="feat-ph">${d.photo ? `<img src="${esc(d.photo)}" alt="Rottweiler ${esc(d.name)}" width="1070" height="1470" fetchpriority="high" decoding="async">` : '<div class="ph"><div><b>Foto a cadastrar</b></div></div>'}</div>
+<div class="feat-tx">${eyebrow(d) ? `<p class="eb">${esc(eyebrow(d))}</p>` : ''}<h2>${esc(d.name)}</h2>${d.description ? `<p class="sub">${esc(d.description)}</p>` : ''}<p>${moreBtn(d)}</p></div></article>`;
+const dogTile = d => `<article class="tile" id="dog-${d.id}">${d.photo ? `<img src="${esc(d.photo)}" alt="Rottweiler ${esc(d.name)}" loading="lazy" decoding="async">` : '<div class="ph" style="aspect-ratio:4/5"><div><b>Foto a cadastrar</b></div></div>'}<div class="b">${eyebrow(d) ? `<p class="eb" style="margin:0">${esc(eyebrow(d))}</p>` : ''}<h3>${esc(d.name)}</h3>${d.description ? `<p>${esc(d.description)}</p>` : ''}<p>${moreBtn(d)}</p></div></article>`;
+function dogModal(d) {
+  const b = detailBlocks(d);
+  return `<dialog class="dm" id="m-${d.id}" aria-labelledby="mt-${d.id}"><div class="dm-bar"><span class="dm-bt">Yannis do Oeste · Rottweilers</span><button class="dm-x" type="button" data-close>Fechar</button></div>
+<div class="dm-body"><div class="dm-in"><div class="dm-h">${eyebrow(d) ? `<p class="eb">${esc(eyebrow(d))}</p>` : ''}<h2 id="mt-${d.id}">${esc(d.name)}</h2>${d.description ? `<p class="sub">${esc(d.description)}</p>` : ''}</div>
+<div class="dm-g"><div class="dm-l">${b.left}</div><div class="dm-r">${b.right}<p class="dm-cta"><a class="btn fill" href="${esc(wa(`Olá! Tenho interesse no Rottweiler ${d.name}. Gostaria de receber mais informações.`))}" target="_blank" rel="noopener">Tenho interesse neste cão</a></p></div></div></div></div></dialog>`;
+}
+const MODAL_JS = `(function(){var d=document,h=d.documentElement;function open(m){if(m&&!m.open){m.showModal();h.classList.add('dm-lock')}}
+d.querySelectorAll('[data-open]').forEach(function(a){a.addEventListener('click',function(e){var m=d.getElementById(a.getAttribute('data-open'));if(m&&m.showModal){e.preventDefault();open(m)}})});
+d.querySelectorAll('dialog.dm').forEach(function(m){m.addEventListener('click',function(e){if(e.target===m)m.close()});
+m.addEventListener('close',function(){m.querySelectorAll('video').forEach(function(v){v.pause()});h.classList.remove('dm-lock')});
+m.querySelectorAll('[data-close]').forEach(function(b){b.addEventListener('click',function(){m.close()})})});
+function fromHash(){var x=/^#dog-(\\d+)$/.exec(location.hash);if(x)open(d.getElementById('m-'+x[1]))}fromHash();addEventListener('hashchange',fromHash)})();`;
 
 const dogCard = d => `<a class="dc" href="/rottweilers/${d.id}">${img(d.photo, 'Rottweiler ' + d.name)}${d.photo ? '' : '<span class="mut">Foto a cadastrar</span>'}<div class="in"><h3>${esc(d.name)}</h3><p>${esc([SEX[d.sex], d.pedigree].filter(Boolean).join(' · '))}</p></div></a>`;
 const parents = l => [l.sire_name, l.dam_name].filter(Boolean).map(esc).join(' × ');
@@ -50,7 +129,7 @@ const LQ = `SELECT l.*,s.name AS sire_name,d.name AS dam_name FROM litters l LEF
 
 async function pedigree(d) {
   const [s, m] = await Promise.all([get(d.sire_id), get(d.dam_id)]);
-  if (!s && !m) return '<p>Informação ainda não cadastrada.</p>';
+  if (!s && !m) return d.pedigree_image ? '<p>O pedigree completo está documentado nos detalhes abaixo.</p>' : '<p>Informação ainda não cadastrada.</p>';
   const [a, b, c, e] = await Promise.all([get(s?.sire_id), get(s?.dam_id), get(m?.sire_id), get(m?.dam_id)]);
   const col = (label, p, x, y) => `<div><small>${label}</small><b>${who(p)}</b><small>Pais</small><span>${who(x)} × ${who(y)}</span></div>`;
   return `<div class="ped">${col('Pai', s, a, b)}${col('Mãe', m, c, e)}</div>`;
@@ -60,6 +139,8 @@ exports.dog = async id => {
   const d = await db.one('SELECT * FROM dogs WHERE id=$1 AND published=1', [id]);
   if (!d) return null;
   const ped = await pedigree(d);
+  const bl = detailBlocks(d, { photo: false });
+  const extra = bl.any ? `<section class="dm-flat"><div class="dm-g"><div class="dm-l">${bl.left}</div><div class="dm-r">${bl.right}</div></div></section>` : '';
   const rows = [['Sexo', SEX[d.sex]], ['Nascimento', fmt(d.birth_date)], ['Pedigree', d.pedigree]].filter(r => r[1]).map(r => `<dt>${r[0]}</dt><dd>${esc(r[1])}</dd>`).join('');
   return layout({ title: `${d.name} — Rottweiler | Canil Yannis do Oeste`, path: `/rottweilers/${d.id}`, image: d.photo,
     desc: (d.description || `Rottweiler ${d.name} do Canil Yannis do Oeste, Concórdia — SC.`).slice(0, 155),
@@ -67,17 +148,22 @@ exports.dog = async id => {
     cta: ['Tenho interesse neste cão', wa(`Olá! Tenho interesse no Rottweiler ${d.name}. Gostaria de receber mais informações.`)],
     body: `<div class="hero2"><div>${d.photo ? `<img src="${esc(d.photo)}" alt="Rottweiler ${esc(d.name)}" width="800" height="1000" fetchpriority="high">` : '<div class="ph"><div><b>Foto a cadastrar</b></div></div>'}</div>
 <div><h1 class="big">${esc(d.name)}</h1>${rows ? `<dl class="facts">${rows}</dl>` : ''}${d.description ? `<p>${esc(d.description)}</p>` : ''}
-<h2 style="font-size:2rem;margin:36px 0 16px">Pedigree</h2>${ped}${d.titles ? `<h2 style="font-size:2rem;margin:36px 0 16px">Títulos</h2><p>${esc(d.titles)}</p>` : ''}</div></div>` });
+<h2 style="font-size:2rem;margin:36px 0 16px">Pedigree</h2>${ped}${d.titles ? `<h2 style="font-size:2rem;margin:36px 0 16px">Títulos</h2><p>${esc(d.titles)}</p>` : ''}</div></div>${extra}` });
 };
 
 exports.dogs = async sexo => {
   const f = { macho: 'MACHO', femea: 'FEMEA' }[sexo];
   const rows = await db.rows(`SELECT * FROM dogs WHERE published=1 ${f ? 'AND sex=$1' : ''} ORDER BY id DESC`, f ? [f] : []);
   const chip = (k, t) => `<a class="chip" href="/rottweilers${k ? '?sexo=' + k : ''}" aria-pressed="${(sexo || '') === k}">${t}</a>`;
-  return layout({ title: 'Nossos Rottweilers | Canil Yannis do Oeste', path: '/rottweilers', desc: 'Conheça os Rottweilers do Canil Yannis do Oeste, em Concórdia — SC.',
-    crumbs: [['Início', '/'], ['Rottweilers', '/rottweilers']], cta: ['Falar com o canil', wa('Olá! Conheci o Canil Yannis do Oeste pelo site e gostaria de saber mais sobre os filhotes disponíveis.')],
-    body: `<h1 class="big" style="font-size:clamp(2.8rem,7vw,5rem)">Nossos Rottweilers</h1><div class="filters" style="display:flex;gap:8px;flex-wrap:wrap;margin:24px 0 32px">${chip('', 'Todos')}${chip('macho', 'Machos')}${chip('femea', 'Fêmeas')}</div>
-${rows.length ? `<div class="grid">${rows.map(dogCard).join('')}</div>` : '<p>Nenhum Rottweiler publicado nesta categoria ainda.</p>'}` });
+  const list = rows.length === 1 ? dogFeat(rows[0]) : rows.length ? `<div class="grid2">${rows.map(dogTile).join('')}</div>` : '<p>Nenhum Rottweiler publicado nesta categoria ainda.</p>';
+  return layout({ title: 'Nossos Rottweilers | Canil Yannis do Oeste', path: '/rottweilers', desc: 'Conheça os Rottweilers do Canil Yannis do Oeste, em Concórdia — SC: linhagens do Leste Europeu e pedigree CBKC.',
+    image: (rows.find(r => r.photo) || {}).photo,
+    crumbs: [['Início', '/'], ['Rottweilers', '/rottweilers']], cta: ['Falar com o canil', wa('Olá! Conheci o Canil Yannis do Oeste pelo site e gostaria de conhecer melhor o trabalho do canil.')],
+    script: MODAL_JS,
+    body: `<h1 class="big" style="font-size:clamp(2.8rem,7vw,5rem);margin-bottom:18px">Nossos Rottweilers</h1>
+<p class="intro">Rottweilers com raízes nas linhagens do Leste Europeu, selecionados pela genealogia, pelas características individuais e pela saúde, e acompanhados de perto no dia a dia.</p>
+<div class="filters" style="display:flex;gap:8px;flex-wrap:wrap;margin:8px 0 8px">${chip('', 'Todos')}${chip('macho', 'Machos')}${chip('femea', 'Fêmeas')}</div>
+${list}${rows.filter(hasMore).map(dogModal).join('')}` });
 };
 
 exports.litters = async () => {
