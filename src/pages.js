@@ -103,7 +103,7 @@ function detailBlocks(d, { photo = true } = {}) {
   return { left, right, any: !!(left || right) };
 }
 const hasMore = d => !!(d.details || d.video || d.pedigree_image);
-const eyebrow = d => [SEX[d.sex], d.pedigree].filter(Boolean).join(' · ');
+const eyebrow = d => ['Plantel', SEX[d.sex], d.pedigree].filter(Boolean).join(' · ');
 const moreBtn = d => hasMore(d) ? `<a class="btn fill" href="/rottweilers/${d.id}" data-open="m-${d.id}">Saiba mais</a>` : `<a class="btn" href="/rottweilers/${d.id}">Ver detalhes</a>`;
 const dogFeat = d => `<article class="feat" id="dog-${d.id}"><div class="feat-ph">${d.photo ? `<img src="${esc(d.photo)}" alt="Rottweiler ${esc(d.name)}" width="1070" height="1470" fetchpriority="high" decoding="async">` : '<div class="ph"><div><b>Foto a cadastrar</b></div></div>'}</div>
 <div class="feat-tx">${eyebrow(d) ? `<p class="eb">${esc(eyebrow(d))}</p>` : ''}<h2>${esc(d.name)}</h2>${d.description ? `<p class="sub">${esc(d.description)}</p>` : ''}<p>${moreBtn(d)}</p></div></article>`;
@@ -112,7 +112,7 @@ function dogModal(d) {
   const b = detailBlocks(d);
   return `<dialog class="dm" id="m-${d.id}" aria-labelledby="mt-${d.id}"><div class="dm-bar"><span class="dm-bt">Yannis do Oeste · Rottweilers</span><button class="dm-x" type="button" data-close>Fechar</button></div>
 <div class="dm-body"><div class="dm-in"><div class="dm-h">${eyebrow(d) ? `<p class="eb">${esc(eyebrow(d))}</p>` : ''}<h2 id="mt-${d.id}">${esc(d.name)}</h2>${d.description ? `<p class="sub">${esc(d.description)}</p>` : ''}</div>
-<div class="dm-g"><div class="dm-l">${b.left}</div><div class="dm-r">${b.right}<p class="dm-cta"><a class="btn fill" href="${esc(wa(`Olá! Tenho interesse no Rottweiler ${d.name}. Gostaria de receber mais informações.`))}" target="_blank" rel="noopener">Tenho interesse neste cão</a></p></div></div></div></div></dialog>`;
+<div class="dm-g"><div class="dm-l">${b.left}</div><div class="dm-r">${b.right}<p class="dm-cta"><button class="btn" type="button" data-close>Fechar</button></p></div></div></div></div></dialog>`;
 }
 const MODAL_JS = `(function(){var d=document,h=d.documentElement;function open(m){if(m&&!m.open){m.showModal();h.classList.add('dm-lock')}}
 d.querySelectorAll('[data-open]').forEach(function(a){a.addEventListener('click',function(e){var m=d.getElementById(a.getAttribute('data-open'));if(m&&m.showModal){e.preventDefault();open(m)}})});
@@ -145,7 +145,6 @@ exports.dog = async id => {
   return layout({ title: `${d.name} — Rottweiler | Canil Yannis do Oeste`, path: `/rottweilers/${d.id}`, image: d.photo,
     desc: (d.description || `Rottweiler ${d.name} do Canil Yannis do Oeste, Concórdia — SC.`).slice(0, 155),
     crumbs: [['Início', '/'], ['Rottweilers', '/rottweilers'], [d.name, `/rottweilers/${d.id}`]],
-    cta: ['Tenho interesse neste cão', wa(`Olá! Tenho interesse no Rottweiler ${d.name}. Gostaria de receber mais informações.`)],
     body: `<div class="hero2"><div>${d.photo ? `<img src="${esc(d.photo)}" alt="Rottweiler ${esc(d.name)}" width="800" height="1000" fetchpriority="high">` : '<div class="ph"><div><b>Foto a cadastrar</b></div></div>'}</div>
 <div><h1 class="big">${esc(d.name)}</h1>${rows ? `<dl class="facts">${rows}</dl>` : ''}${d.description ? `<p>${esc(d.description)}</p>` : ''}
 <h2 style="font-size:2rem;margin:36px 0 16px">Pedigree</h2>${ped}${d.titles ? `<h2 style="font-size:2rem;margin:36px 0 16px">Títulos</h2><p>${esc(d.titles)}</p>` : ''}</div></div>${extra}` });
@@ -158,10 +157,10 @@ exports.dogs = async sexo => {
   const list = rows.length === 1 ? dogFeat(rows[0]) : rows.length ? `<div class="grid2">${rows.map(dogTile).join('')}</div>` : '<p>Nenhum Rottweiler publicado nesta categoria ainda.</p>';
   return layout({ title: 'Nossos Rottweilers | Canil Yannis do Oeste', path: '/rottweilers', desc: 'Conheça os Rottweilers do Canil Yannis do Oeste, em Concórdia — SC: linhagens do Leste Europeu e pedigree CBKC.',
     image: (rows.find(r => r.photo) || {}).photo,
-    crumbs: [['Início', '/'], ['Rottweilers', '/rottweilers']], cta: ['Falar com o canil', wa('Olá! Conheci o Canil Yannis do Oeste pelo site e gostaria de conhecer melhor o trabalho do canil.')],
+    crumbs: [['Início', '/'], ['Rottweilers', '/rottweilers']],
     script: MODAL_JS,
     body: `<h1 class="big" style="font-size:clamp(2.8rem,7vw,5rem);margin-bottom:18px">Nossos Rottweilers</h1>
-<p class="intro">Rottweilers com raízes nas linhagens do Leste Europeu, selecionados pela genealogia, pelas características individuais e pela saúde, e acompanhados de perto no dia a dia.</p>
+<p class="intro">Conheça o plantel do canil: Rottweilers com raízes nas linhagens do Leste Europeu, selecionados pela genealogia, pelas características individuais e pela saúde.</p>
 <div class="filters" style="display:flex;gap:8px;flex-wrap:wrap;margin:8px 0 8px">${chip('', 'Todos')}${chip('macho', 'Machos')}${chip('femea', 'Fêmeas')}</div>
 ${list}${rows.filter(hasMore).map(dogModal).join('')}` });
 };
