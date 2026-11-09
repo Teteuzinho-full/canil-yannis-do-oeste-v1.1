@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#0A0A0A">
+  <meta name="robots" content="noindex,nofollow">
+  <title>Termos de uso | Yannis do Oeste</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;1,500&family=Manrope:wght@400;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root{--k:#0A0A0A;--k2:#151515;--cream:#F4F0E8;--gold:#C8A96B;--mut:#b1aba0;--line:rgba(244,240,232,.15)}*{box-sizing:border-box}body{margin:0;min-height:100svh;display:grid;place-items:center;padding:clamp(20px,5vw,56px);background:radial-gradient(700px 420px at 82% 12%,rgba(138,90,43,.28),transparent 70%),var(--k);color:var(--cream);font:400 16px/1.65 Manrope,system-ui,sans-serif}.panel{width:min(100%,720px);border:1px solid var(--line);padding:clamp(28px,6vw,60px);background:rgba(21,21,21,.88);box-shadow:0 28px 80px rgba(0,0,0,.55)}.brand{display:flex;gap:12px;align-items:center;font:600 1.25rem 'Cormorant Garamond',serif;letter-spacing:.05em}.brand img{width:46px;height:46px;border-radius:50%}.eyebrow{margin:38px 0 10px;color:var(--gold);font-size:.72rem;font-weight:700;letter-spacing:.2em;text-transform:uppercase}h1{margin:0;font:500 clamp(2.8rem,7vw,4.7rem)/.95 'Cormorant Garamond',serif;letter-spacing:-.02em}p{color:var(--mut);max-width:60ch}.list{margin:24px 0 30px;padding:20px 22px;border-left:2px solid var(--gold);background:rgba(244,240,232,.035);color:var(--mut)}.actions{display:flex;flex-wrap:wrap;gap:12px;margin-top:30px}.button{min-height:50px;padding:0 23px;display:inline-flex;align-items:center;justify-content:center;border:1px solid var(--gold);background:transparent;color:var(--cream);font:700 .74rem/1 Manrope,sans-serif;letter-spacing:.13em;text-transform:uppercase;cursor:pointer;text-decoration:none}.button.primary{background:var(--gold);color:var(--k)}.button:hover{filter:brightness(1.1)}.fine{font-size:.78rem;margin-top:24px}.declined{display:none}.declined.on{display:block}.choice.off{display:none}:focus-visible{outline:2px solid var(--cream);outline-offset:4px}@media(max-width:520px){.actions{display:grid}.button{width:100%}}
+  </style>
+</head>
+<body>
+  <main class="panel">
+    <div class="brand"><img src="/assets/img/logo.webp" alt=""><span>Yannis do Oeste</span></div>
+    <section id="choice" class="choice" aria-labelledby="terms-title">
+      <p class="eyebrow">Antes de continuar</p>
+      <h1 id="terms-title">Termos de uso</h1>
+      <p>Para acessar o site do Canil Yannis do Oeste, confirme que está de acordo com os termos abaixo.</p>
+      <div class="list">Use este site de forma responsável. As informações e imagens são protegidas; disponibilidade, valores e condições devem ser confirmados diretamente com o canil. Ao continuar, você concorda com o uso de cookies essenciais para registrar este aceite.</div>
+      <div class="actions"><button class="button primary" id="accept" type="button">Aceitar e acessar o site</button><button class="button" id="decline" type="button">Não aceito os termos</button></div>
+      <p class="fine">Seu aceite é salvo por 12 meses e pode ser renovado ao limpar os dados do navegador.</p>
+    </section>
+    <section id="declined" class="declined" aria-live="polite">
+      <p class="eyebrow">Acesso não liberado</p>
+      <h1>Você não aceitou os termos.</h1>
+      <p>Sem o aceite, não é possível acessar o site. Você pode voltar e revisar os termos ou sair agora.</p>
+      <div class="actions"><button class="button primary" id="review" type="button">Revisar e aceitar os termos</button><a class="button" href="https://www.google.com/" rel="noopener">Sair para o Google</a></div>
+    </section>
+  </main>
+  <script>
+    (function(){
+      var choice=document.getElementById('choice'),declined=document.getElementById('declined');
+      var q=new URLSearchParams(location.search),raw=q.get('next')||'/',next=(raw.charAt(0)==='/'&&raw.slice(0,2)!=='//')?raw:'/';
+      function declinedView(){choice.classList.add('off');declined.classList.add('on');history.replaceState(null,'','/termos?declined=1')}
+      function post(url){return fetch(url,{method:'POST',headers:{'X-Requested-With':'fetch'},credentials:'same-origin'}).then(function(r){if(!r.ok)throw new Error();return r.json()})}
+      document.getElementById('accept').onclick=function(){post('/api/terms/accept').then(function(){location.replace(next)}).catch(function(){alert('Não foi possível registrar o aceite. Tente novamente.')})};
+      document.getElementById('decline').onclick=function(){post('/api/terms/decline').finally(declinedView)};
+      document.getElementById('review').onclick=function(){declined.classList.remove('on');choice.classList.remove('off');history.replaceState(null,'','/termos?next='+encodeURIComponent(next))};
+      if(q.get('declined')==='1')declinedView();
+    })();
+  </script>
+</body>
+</html>
