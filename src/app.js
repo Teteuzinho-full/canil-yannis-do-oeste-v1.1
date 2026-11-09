@@ -151,6 +151,10 @@ app.get('/', async (q, r) => {
   homeTpl = homeTpl || await fs.readFile(path.join(ROOT, 'views/index.html'), 'utf8');
   r.set('Cache-Control', 'public, max-age=0, s-maxage=60, stale-while-revalidate=300').type('html').send(await pages.home(homeTpl));
 });
+for (const t of ['canil', 'genetica', 'alimentacao', 'vacinacao', 'parasitas', 'saude-articular', 'pedigree', 'microchipagem', 'acompanhamento-veterinario', 'equipe'])
+  app.get('/' + t, async (q, r, n) => { const h = await pages.topic('/' + t); h ? r.send(h) : n(); });
+app.get('/linhagens', async (q, r) => r.send(await pages.lineages()));
+app.get('/linhagens/:k', async (q, r, n) => { const h = await pages.lineage(q.params.k); h ? r.send(h) : n(); });
 app.get('/rottweilers', async (q, r) => r.send(await pages.dogs(String(q.query.sexo || ''))));
 app.get('/rottweilers/:id', async (q, r, n) => { const h = await pages.dog(Number(q.params.id) || 0); h ? r.send(h) : n(); });
 app.get('/filhotes', async (q, r) => r.send(await pages.litters()));

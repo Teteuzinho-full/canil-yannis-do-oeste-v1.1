@@ -68,10 +68,12 @@ function layout({ title, desc, path, image, crumbs, body, cta, script }) {
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;1,500&family=Manrope:wght@400;500;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="/assets/site.css"><style>${CSS}</style><script type="application/ld+json">${JSON.stringify(bc).replace(/</g, '\\u003c')}</script></head><body>
 <header class="s"><div class="wrap nav"><a class="brand" href="/"><img src="/assets/img/logo.webp" alt="Emblema Yannis do Oeste" width="44" height="44"><span>Yannis do Oeste</span></a>
-<nav aria-label="Principal"><ul><li><a class="ul" href="/rottweilers">Rottweilers</a></li><li><a class="ul" href="/filhotes">Filhotes</a></li><li><a class="ul" href="/#contato">Contato</a></li></ul></nav></div></header>
+<nav aria-label="Principal"><ul><li><a class="ul" href="/canil">O Canil</a></li><li><a class="ul" href="/rottweilers">Rottweilers</a></li><li><a class="ul" href="/filhotes">Filhotes</a></li><li><a class="ul" href="/linhagens">Linhagens</a></li><li><a class="ul" href="/#contato">Contato</a></li></ul></nav>
+<button class="burger" id="bg" aria-expanded="false" aria-controls="mn" aria-label="Abrir menu"><span></span><span></span><span></span></button></div></header>
+<div class="menu" id="mn" aria-hidden="true"><a href="/canil">O Canil</a><a href="/rottweilers">Rottweilers</a><a href="/filhotes">Filhotes</a><a href="/linhagens">Linhagens</a><a href="/#contato">Contato</a></div>
 <main class="pg"><div class="wrap"><nav class="crumb" aria-label="Você está em">${crumbs.map((c, i) => i < crumbs.length - 1 ? `<a href="${c[1]}">${esc(c[0])}</a> › ` : `<span aria-current="page">${esc(c[0])}</span>`).join('')}</nav>${body}</div></main>
 ${cta ? `<a class="btn fill cta-fix" href="${esc(cta[1])}" target="_blank" rel="noopener">${esc(cta[0])} <i>→</i></a>` : ''}
-<footer><div class="wrap"><div><p>Yannis do Oeste Rottweilers<br>Concórdia — SC</p></div><ul><li><a class="ul" href="/rottweilers">Rottweilers</a></li><li><a class="ul" href="/filhotes">Filhotes</a></li></ul><ul><li><a class="ul" href="https://instagram.com/yannisdooeste" target="_blank" rel="noopener">Instagram</a></li><li>© 2026 Yannis do Oeste</li></ul></div></footer>${script ? `<script>${script}</script>` : ''}</body></html>`;
+<footer><div class="wrap"><div><p>Yannis do Oeste Rottweilers<br>Concórdia — SC</p></div><ul><li><a class="ul" href="/canil">O Canil</a></li><li><a class="ul" href="/rottweilers">Rottweilers</a></li><li><a class="ul" href="/filhotes">Filhotes</a></li><li><a class="ul" href="/linhagens">Linhagens</a></li></ul><ul><li><a class="ul" href="https://instagram.com/yannisdooeste" target="_blank" rel="noopener">Instagram</a></li><li>© 2026 Yannis do Oeste</li></ul></div></footer><script>${MENU_JS}${script || ''}</script></body></html>`;
 }
 
 
@@ -79,12 +81,13 @@ ${cta ? `<a class="btn fill cta-fix" href="${esc(cta[1])}" target="_blank" rel="
 const BOLD = /^([^:]{1,40}):\s+(.+)$/;
 function rich(text) {
   return String(text || '').split(/\n{2,}/).map(b => b.trim()).filter(Boolean).map(b => {
+    if (b === '[[linhagens]]') return '<!--LIN-->';
     const lines = b.split('\n').map(l => l.trim()).filter(Boolean);
     let html = '';
     if (lines[0].startsWith('## ')) html += `<h3>${esc(lines.shift().slice(3))}</h3>`;
     if (lines.length && lines.every(l => l.startsWith('- ')))
       html += `<ul class="rl">${lines.map(l => { const t = l.slice(2), m = BOLD.exec(t); return `<li>${m ? `<b>${esc(m[1])}:</b> ${esc(m[2])}` : esc(t)}</li>`; }).join('')}</ul>`;
-    else html += lines.map(l => `<p>${esc(l)}</p>`).join('');
+    else html += lines.map(l => (l.startsWith('Fontes citadas') ? `<p class="src">${esc(l)}</p>` : `<p>${esc(l)}</p>`)).join('');
     return html;
   }).join('');
 }
@@ -194,7 +197,7 @@ const EB = { sobre: 'Origem', genetica: 'Genética', alimentacao: 'Nutrição', 
 
 async function loadContent() {
   const [rows, imgs, vids] = await Promise.all([
-    db.rows('SELECT slug,title,subtitle,body,extra FROM site_content WHERE published=1 ORDER BY sort'),
+    db.rows('SELECT slug,title,subtitle,body,extra,summary FROM site_content WHERE published=1 ORDER BY sort'),
     db.rows('SELECT slug,url,alt,caption,position FROM content_images WHERE published=1 ORDER BY sort,id'),
     db.rows('SELECT slot,title,description,url,poster FROM videos WHERE published=1 AND url IS NOT NULL')]);
   const map = {}; rows.forEach(r => (map[r.slug] = { ...r, images: imgs.filter(i => i.slug === r.slug) }));
@@ -223,33 +226,115 @@ function videoBlock(slot, v, fb, alt) {
   return `<section id="s-video-${slot}" class="sx vsec${alt ? ' alt' : ''}"><div class="wrap"><div class="sxt c"><p class="eb">Vídeo</p><h2>${esc(title)}</h2>${desc ? `<p class="sub">${esc(desc)}</p>` : ''}</div>${frame ? `<div class="vf">${frame}</div>` : `<div class="vf soon"><div><b>${esc(fb.soon || 'Vídeo em breve.')}</b></div></div>`}</div></section>`;
 }
 
+// ---------- tópicos: resumo na home e página própria ----------
+const MENU_JS = `(function(){var b=document.getElementById('bg'),m=document.getElementById('mn');if(!b||!m)return;function t(o){b.setAttribute('aria-expanded',o);m.classList.toggle('o',o);m.setAttribute('aria-hidden',!o)}
+b.addEventListener('click',function(){t(b.getAttribute('aria-expanded')!=='true')});m.querySelectorAll('a').forEach(function(a){a.addEventListener('click',function(){t(false)})});
+document.addEventListener('keydown',function(e){if(e.key==='Escape')t(false)});document.addEventListener('click',function(e){if(m.classList.contains('o')&&!m.contains(e.target)&&!b.contains(e.target))t(false)})})();`;
+const TOPIC_PATH = { sobre: '/canil', genetica: '/genetica', alimentacao: '/alimentacao', vacinacao: '/vacinacao', parasitas: '/parasitas', 'saude-articular': '/saude-articular', pedigree: '/pedigree', microchipagem: '/microchipagem', veterinario: '/acompanhamento-veterinario', socios: '/equipe' };
+const PATH_SLUG = Object.fromEntries(Object.entries(TOPIC_PATH).map(([s, q]) => [q, s]));
+const CARE = ['alimentacao', 'vacinacao', 'parasitas', 'saude-articular', 'pedigree', 'microchipagem', 'veterinario'];
+const ORDER = ['sobre', 'genetica', 'alimentacao', 'vacinacao', 'parasitas', 'saude-articular', 'pedigree', 'microchipagem', 'veterinario', 'socios'];
+const LIN = { 'timit-tor': { slug: 'linhagem-timit-tor', flag: 'rs', name: 'Timit-Tor', country: 'Sérvia' }, 'vom-hause-edelstein': { slug: 'linhagem-vom-hause-edelstein', flag: 'hr', name: 'vom Hause Edelstein', country: 'Croácia' } };
+const hrefOf = slug => TOPIC_PATH[slug] || (slug === LIN['timit-tor'].slug ? '/linhagens/timit-tor' : slug === LIN['vom-hause-edelstein'].slug ? '/linhagens/vom-hause-edelstein' : '/');
+const EB2 = { ...EB, socios: 'Pessoas', 'linhagem-timit-tor': 'Linhagem', 'linhagem-vom-hause-edelstein': 'Linhagem' };
+const SOON = '<div class="soon-note"><small>Conteúdo aprofundado</small><b>Iremos atualizar em breve.</b></div>';
+const CTA_GERAL = ['Falar com o canil', wa('Olá! Conheci o Canil Yannis do Oeste pelo site e gostaria de conhecer melhor o trabalho do canil.')];
+
+const flagCard = (k, link = true) => { const L = Object.values(LIN).find(x => x.flag === k), key = Object.keys(LIN).find(x => LIN[x].flag === k);
+  return `<${link ? 'a' : 'div'} class="fc" ${link ? `href="/linhagens/${key}" tabindex="-1" aria-hidden="true"` : ''} style="--bg:url(/assets/flags/bg-${k}.webp)"><span class="fc-bg" aria-hidden="true"></span><span class="fc-row"><span class="fc-fw"><img src="/assets/flags/${k}-flag.webp" alt="Bandeira da ${L.country}" width="240" height="180" loading="lazy" decoding="async"></span><span class="fc-sep" aria-hidden="true"></span><span class="fc-txt"><span class="fc-name">${L.name}</span><span class="fc-cty">${L.country}</span></span></span></${link ? 'a' : 'div'}>`; };
+const flagCards = () => `<div class="fcs"><div class="fcs-g">${['rs', 'hr'].map(k => { const key = Object.keys(LIN).find(x => LIN[x].flag === k); return `<div class="fcw">${flagCard(k)}<a class="btn" href="/linhagens/${key}">Saiba mais sobre a linhagem</a></div>`; }).join('')}</div></div>`;
+const tcard = s => `<article class="tc"><h3>${esc(s.title)}</h3>${s.summary ? `<p>${esc(s.summary)}</p>` : ''}<a class="btn" href="${hrefOf(s.slug)}">Saiba mais</a></article>`;
+const moreLink = (href, c) => `<p class="more"${c ? ' style="text-align:center"' : ''}><a class="btn fill" href="${href}">Saiba mais</a></p>`;
+
+function compact(s, { alt, href, img, after = '' }) {
+  const media = img ? `<div class="sxm n1">${fig(img, s)}</div>` : '';
+  return `<section id="${s.slug === 'sobre' ? 'canil' : 's-' + s.slug}" class="sx${alt ? ' alt' : ''}"><div class="wrap sxg${media ? '' : ' one'}"><div class="sxt"><p class="eb">${esc(EB[s.slug] || '')}</p><h2>${esc(s.title)}</h2>${s.subtitle ? `<p class="sub">${esc(s.subtitle)}</p>` : ''}<div class="paras"><p>${esc(s.summary || '')}</p></div>${moreLink(href)}${after}</div>${media}</div></section>`;
+}
+
 exports.home = async tpl => {
   const { map: m, videos } = await loadContent();
-  let n = 0; const alt = () => n++ % 2 === 1;
   const R = {};
-  R['video-canil'] = videoBlock('canil', videos.canil, { title: 'Conheça o Canil Yannis do Oeste', desc: 'Um olhar mais próximo sobre o Canil Yannis do Oeste.', soon: 'Em breve teremos um novo vídeo.' }, alt());
-  if (m.sobre) R.sobre = editorial(m.sobre, { alt: alt(), after: '<p style="margin-top:28px"><a class="ul" href="#s-equipe">Conheça quem está à frente do canil →</a></p>' });
-  if (m.genetica) R.genetica = editorial(m.genetica, { alt: alt(), rev: true, after: '<div class="lin" role="group" aria-label="Famílias de referência do plantel"><div class="fcs"><div class="fcs-g"><a class="fc" href="#linhagens" style="--bg:url(/assets/flags/bg-rs.webp)" aria-label="Timit-Tor, Sérvia"><span class="fc-bg" aria-hidden="true"></span><span class="fc-row"><span class="fc-fw"><img src="/assets/flags/rs-flag.webp" alt="Bandeira da Sérvia" width="240" height="180" loading="lazy" decoding="async"></span><span class="fc-sep" aria-hidden="true"></span><span class="fc-txt"><span class="fc-name">Timit-Tor</span><span class="fc-cty">Sérvia</span></span></span></a><a class="fc" href="#linhagens" style="--bg:url(/assets/flags/bg-hr.webp)" aria-label="vom Hause Edelstein, Croácia"><span class="fc-bg" aria-hidden="true"></span><span class="fc-row"><span class="fc-fw"><img src="/assets/flags/hr-flag.webp" alt="Bandeira da Croácia" width="240" height="180" loading="lazy" decoding="async"></span><span class="fc-sep" aria-hidden="true"></span><span class="fc-txt"><span class="fc-name">vom Hause Edelstein</span><span class="fc-cty">Croácia</span></span></span></a></div></div><i></i><b>Plantel Yannis do Oeste</b></div>' });
+  R['video-canil'] = videoBlock('canil', videos.canil, { title: 'Conheça o Canil Yannis do Oeste', desc: 'Um olhar mais próximo sobre o Canil Yannis do Oeste.', soon: 'Em breve teremos um novo vídeo.' }, false);
+  if (m.sobre) R.sobre = compact(m.sobre, { alt: true, href: TOPIC_PATH.sobre, img: m.sobre.images[0] });
+  if (m.genetica) R.genetica = compact(m.genetica, { alt: false, href: TOPIC_PATH.genetica, after: `<div class="lin" role="group" aria-label="Famílias de referência do plantel">${flagCards()}<i></i><b>Plantel Yannis do Oeste</b></div>` });
   if (m.socios || m.darlan || m.bruna) {
-    const s = m.socios || { title: 'Quem está à frente do canil', body: '' };
-    R.equipe = `<section id="s-equipe" class="sx${alt() ? ' alt' : ''}"><div class="wrap"><div class="sxt c"><p class="eb">Pessoas</p><h2>${esc(s.title)}</h2></div><div class="team">${m.darlan ? person(m.darlan, 'D') : ''}${m.bruna ? person(m.bruna, 'B') : ''}</div>${s.body ? `<div class="sxt c" style="margin-top:40px"><div class="paras">${para(s.body)}</div></div>` : ''}</div></section>`;
+    const s = m.socios || { title: 'Quem está à frente do canil' };
+    const ppl = [m.darlan, m.bruna].filter(Boolean).map(x => `<div class="pc2">${x.images[0] ? `<img class="av" src="${esc(x.images[0].url)}" alt="${esc(x.images[0].alt || x.title)}" width="76" height="76" loading="lazy">` : `<span class="mono2" aria-hidden="true">${esc(x.title.charAt(0).toUpperCase())}</span>`}<h3>${esc(x.title)}</h3>${x.subtitle ? `<p class="role">${esc(x.subtitle)}</p>` : ''}</div>`).join('');
+    R.equipe = `<section id="s-equipe" class="sx"><div class="wrap"><div class="sxt c"><p class="eb">Pessoas</p><h2>${esc(s.title)}</h2>${s.summary ? `<p class="sub">${esc(s.summary)}</p>` : ''}</div><div class="team2">${ppl}</div>${moreLink(TOPIC_PATH.socios, true)}</div></section>`;
   }
-  if (m.alimentacao) R.alimentacao = editorial(m.alimentacao, { alt: alt() });
-  if (m.vacinacao) { const v = m.vacinacao; R.vacinacao = editorial(v, { alt: alt(), rev: true, main: v.images.slice(0, 1), below: strip(v, v.images.slice(1), v.extra) }); }
-  if (m.parasitas) R.parasitas = editorial(m.parasitas, { alt: alt() });
-  if (m['saude-articular']) { const v = m['saude-articular']; R['saude-articular'] = editorial(v, { off: true, main: v.images.slice(0, 1), below: strip(v, v.images.slice(1)) }); n++; }
-  if (m.pedigree) R.pedigree = editorial(m.pedigree, { alt: alt(), after: '<p style="margin-top:28px"><a class="ul" href="/rottweilers">Ver o pedigree de cada Rottweiler →</a></p>' });
-  if (m.microchipagem) R.microchipagem = editorial(m.microchipagem, { alt: alt(), rev: true });
-  if (m.veterinario) R.veterinario = editorial(m.veterinario, { alt: alt() });
-  R['video-filhotes'] = videoBlock('filhotes', videos.filhotes, { title: 'Conheça nossos filhotes', desc: null }, alt());
+  const care = CARE.filter(k => m[k]);
+  if (care.length) R.cuidados = `<section id="cuidados" class="sx alt"><div class="wrap"><div class="sxt c"><p class="eb">Saúde e rotina</p><h2>Cuidados com o plantel</h2></div><div class="tcs">${care.map(k => tcard(m[k])).join('')}</div></div></section>`;
+  R['video-filhotes'] = videoBlock('filhotes', videos.filhotes, { title: 'Conheça nossos filhotes', desc: null }, false);
   R.videos = R['video-canil'] + R['video-filhotes']; // compatível com o marcador antigo do modelo
   let html = tpl.replace(/<!--SX:([\w-]+)-->/g, (x, k) => R[k] || '').replaceAll('%BASE_URL%', BASE);
-  // Rede de segurança: se o modelo não tiver os marcadores dos vídeos, eles entram nos lugares certos.
+  // Rede de segurança: se o modelo não tiver os marcadores, os blocos entram nos lugares certos.
   if (!html.includes('id="s-video-canil"')) html = html.replace(/(<div class="strip">[\s\S]*?<\/ul><\/div><\/div>)/, (m0) => m0 + '\n' + R['video-canil']);
-  if (!html.includes('id="s-video-filhotes"')) html = html.replace('<section class="band"', () => R['video-filhotes'] + '\n<section class="band"');
+  if (R.cuidados && !html.includes('id="cuidados"')) html = html.replace(/<section[^>]*id="s-video-filhotes"/, (m0) => R.cuidados + '\n' + m0);
+  if (!html.includes('id="s-video-filhotes"')) html = html.replace('<section id="filhotes"', () => R['video-filhotes'] + '\n<section id="filhotes"');
   return html;
 };
 
-exports.urls = async () => ['/', '/rottweilers', '/filhotes',
+// ---------- páginas de tópicos ----------
+async function rowWithImages(slug) {
+  const r = await db.one('SELECT * FROM site_content WHERE slug=$1 AND published=1', [slug]);
+  if (!r) return null;
+  r.images = await db.rows('SELECT url,alt,caption,position FROM content_images WHERE slug=$1 AND published=1 ORDER BY sort,id', [slug]);
+  return r;
+}
+async function relatedCards(list) {
+  const rows = await db.rows('SELECT slug,title,summary FROM site_content WHERE published=1 AND slug = ANY($1)', [list]);
+  const by = Object.fromEntries(rows.map(r => [r.slug, r]));
+  return list.map(s => by[s]).filter(Boolean).map(tcard).join('');
+}
+const figLite = im => `<figure class="fg2"><a href="${esc(im.url)}" target="_blank" rel="noopener"><img src="${esc(im.url)}" alt="${esc(im.alt || '')}" loading="lazy" decoding="async"></a>${im.caption ? `<figcaption>${esc(im.caption)}</figcaption>` : ''}</figure>`;
+function topicPage({ row, path, crumbs, pre = '', text, media = '', related }) {
+  return layout({ title: `${row.title} | Canil Yannis do Oeste`, desc: (row.summary || row.subtitle || row.title).slice(0, 155), path, crumbs, cta: CTA_GERAL,
+    image: row.images && row.images[0] && row.images[0].url,
+    body: `<article class="tp"><div class="tp-h"><p class="eb">${esc(EB2[row.slug] || '')}</p><h1>${esc(row.title)}</h1>${row.subtitle ? `<p class="sub">${esc(row.subtitle)}</p>` : ''}</div>${pre}
+<div class="tp-g${media ? ' m' : ''}"><div class="tp-x">${text}</div>${media ? `<aside class="tp-m" aria-label="Imagens">${media}</aside>` : ''}</div>
+<section class="tp-more"><h2>Continue conhecendo</h2><div class="tcs">${related}</div></section></article>` });
+}
+
+exports.topic = async path => {
+  const slug = PATH_SLUG[path];
+  if (!slug) return null;
+  const row = await rowWithImages(slug);
+  if (!row) return null;
+  const hasDetails = !!(row.details && row.details.trim());
+  let text = hasDetails ? rich(row.details) : para(row.body);
+  let imgs = row.images;
+  if (slug === 'socios') {
+    const [dar, bru] = await Promise.all([rowWithImages('darlan'), rowWithImages('bruna')]);
+    text = para(row.body) + [dar, bru].filter(Boolean).map(x => `<h3>${esc(x.title)}</h3>${x.subtitle ? `<p class="role">${esc(x.subtitle)}</p>` : ''}${para(x.body)}`).join('');
+    imgs = [...(dar ? dar.images.slice(0, 1) : []), ...(bru ? bru.images.slice(0, 1) : []), ...imgs];
+  }
+  if (!hasDetails) text += SOON;
+  text = text.replace('<!--LIN-->', slug === 'genetica' ? flagCards() : '');
+  const i = ORDER.indexOf(slug);
+  const related = await relatedCards([1, 2, 3].map(k => ORDER[(i + k) % ORDER.length]));
+  return topicPage({ row, path, crumbs: [['Início', '/'], [row.title, path]], text, media: imgs.map(figLite).join(''), related });
+};
+
+exports.lineage = async key => {
+  const L = LIN[key];
+  if (!L) return null;
+  const row = await rowWithImages(L.slug);
+  if (!row) return null;
+  const hasDetails = !!(row.details && row.details.trim());
+  const other = key === 'timit-tor' ? 'vom-hause-edelstein' : 'timit-tor';
+  const related = await relatedCards([LIN[other].slug, 'genetica', 'sobre']);
+  const path = `/linhagens/${key}`;
+  return topicPage({ row, path, crumbs: [['Início', '/'], ['Linhagens', '/linhagens'], [row.title, path]],
+    pre: `<div class="fc-hero">${flagCard(L.flag, false)}</div>`, text: (hasDetails ? rich(row.details) : para(row.body) + SOON), media: row.images.map(figLite).join(''), related });
+};
+
+exports.lineages = async () => {
+  const gen = await rowWithImages('genetica');
+  return layout({ title: 'Linhagens | Canil Yannis do Oeste', desc: ((gen && gen.summary) || 'Linhagens Timit-Tor e vom Hause Edelstein, referências do plantel do Canil Yannis do Oeste.').slice(0, 155), path: '/linhagens',
+    crumbs: [['Início', '/'], ['Linhagens', '/linhagens']], cta: CTA_GERAL,
+    body: `<article class="tp"><div class="tp-h"><p class="eb">Genética</p><h1>Linhagens</h1><p class="sub">Timit-Tor e vom Hause Edelstein</p></div>${gen && gen.summary ? `<div class="tp-x"><p>${esc(gen.summary)}</p></div>` : ''}<div style="margin-top:28px">${flagCards()}</div><p class="more"><a class="btn fill" href="/genetica">Genética internacional</a></p></article>` });
+};
+
+exports.urls = async () => ['/', '/rottweilers', '/filhotes', '/linhagens', '/linhagens/timit-tor', '/linhagens/vom-hause-edelstein', ...Object.values(TOPIC_PATH),
   ...(await db.rows('SELECT id FROM dogs WHERE published=1')).map(r => `/rottweilers/${r.id}`),
   ...(await db.rows('SELECT id FROM litters WHERE published=1')).map(r => `/ninhadas/${r.id}`)];

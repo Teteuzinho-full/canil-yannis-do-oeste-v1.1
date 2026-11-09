@@ -62,6 +62,15 @@ const MIGRATIONS = [[
       WHERE NOT EXISTS (SELECT 1 FROM dogs WHERE lower(name)='savana')`,
       [s.name, s.sex, s.birth_date, s.pedigree, s.description, s.photo, s.details, s.video, s.video_poster, s.pedigree_image]);
   },
+], [
+  'ALTER TABLE site_content ADD COLUMN IF NOT EXISTS summary TEXT',
+  'ALTER TABLE site_content ADD COLUMN IF NOT EXISTS details TEXT',
+  async c => {
+    const { TOPIC_TEXT, NEW_ROWS } = require('./seed-topics');
+    for (const r of NEW_ROWS) await c.query('INSERT INTO site_content(slug,sort,title,subtitle,body,summary,details) VALUES($1,$2,$3,$4,$5,$6,$7) ON CONFLICT (slug) DO NOTHING', [r.slug, r.sort, r.title, r.subtitle, null, r.summary, r.details]);
+    for (const [slug, t] of Object.entries(TOPIC_TEXT))
+      await c.query('UPDATE site_content SET summary=COALESCE(summary,$2::text), details=COALESCE(details,$3::text), subtitle=COALESCE(subtitle,$4::text) WHERE slug=$1', [slug, t.summary ?? null, t.details ?? null, t.subtitle ?? null]);
+  },
 ]];
 
 async function init() {

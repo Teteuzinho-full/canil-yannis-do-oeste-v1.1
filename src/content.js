@@ -45,6 +45,8 @@ module.exports = ({ HttpError, log }) => {
     if ('subtitle' in b) o.subtitle = str(b.subtitle, 300, 'Subtítulo');
     if ('body' in b) o.body = str(b.body, 6000, 'Texto');
     if ('extra' in b) o.extra = str(b.extra, 300, 'Título do bloco extra');
+    if ('summary' in b) o.summary = str(b.summary, 500, 'Resumo');
+    if ('details' in b) o.details = str(b.details, 20000, 'Texto completo');
     if ('published' in b) o.published = b.published ? 1 : 0;
     const cols = Object.keys(o);
     if (!cols.length) throw new HttpError(422, 'Nenhum campo para atualizar.');

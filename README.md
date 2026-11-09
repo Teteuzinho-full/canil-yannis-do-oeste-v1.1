@@ -22,6 +22,9 @@ O texto oficial e as imagens fornecidas entram como **semente** na migration 2 (
 Galeria: categorias novas — Alimentação, Vacinação, Saúde, Veterinário, Pedigree, Microchipagem e Pessoas.
 API: `GET /api/content`; admin: `GET /api/admin/content`, `PUT /api/admin/content/:slug`, `POST /api/admin/content/:slug/images`, `PUT|DELETE /api/admin/content/images/:id`, `POST /api/admin/content/images/:id/move`, `GET /api/admin/videos`, `PUT /api/admin/videos/:slot`, `POST /api/admin/upload-video`.
 
+## Home resumida e páginas de tópicos
+Cada tópico da home mostra um resumo e o botão **Saiba mais**, que abre uma página própria: `/canil`, `/genetica`, `/alimentacao`, `/vacinacao`, `/parasitas`, `/saude-articular`, `/pedigree`, `/microchipagem`, `/acompanhamento-veterinario`, `/equipe`, `/linhagens` (e `/linhagens/timit-tor`, `/linhagens/vom-hause-edelstein`). No painel (aba Conteúdo) cada tópico tem **Resumo** (home) e **Texto completo** (página; use `## Título` e `- Item: valor`). Sem texto completo, a página mostra o texto curto e o aviso "Iremos atualizar em breve." A migration 4 cria os campos e cadastra os textos fornecidos pelo canil.
+
 ## Página /rottweilers e card "Saiba mais"
 Todos os botões "Rottweilers" do site levam a `/rottweilers`: introdução curta e, para cada cão publicado, foto, legenda e o botão **Saiba mais**, que abre um card grande com foto, vídeo, texto técnico e imagem do pedigree (com um único cão, ele aparece em destaque; com vários, em grade). `/rottweilers#dog-ID` abre o card direto.
 No painel (aba Rottweilers) cada cão tem: **Legenda curta** (aparece no card), **Detalhes técnicos** (use `## Título` para seções e `- Item: valor` para listas), **Vídeo** (link do YouTube/Vimeo/arquivo ou envio de até 4 MB), **Miniatura do vídeo** e **Imagem do pedigree**. A migration 3 cria essas colunas e cadastra a Savana (dados transcritos do pedigree CBKC fornecido).
