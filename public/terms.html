@@ -1,0 +1,72 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#0A0A0A">
+  <meta name="robots" content="noindex,nofollow">
+  <title>Termos de uso | Yannis do Oeste</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;1,500&family=Manrope:wght@400;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root{--k:#0A0A0A;--k2:#151515;--cream:#F4F0E8;--gold:#C8A96B;--mut:#b1aba0;--line:rgba(244,240,232,.15)}*{box-sizing:border-box}body{margin:0;min-height:100svh;display:grid;place-items:center;padding:clamp(20px,5vw,56px);background:radial-gradient(700px 420px at 82% 12%,rgba(138,90,43,.28),transparent 70%),var(--k);color:var(--cream);font:400 16px/1.65 Manrope,system-ui,sans-serif}.panel{width:min(100%,720px);border:1px solid var(--line);padding:clamp(24px,5vw,44px);background:rgba(21,21,21,.88);box-shadow:0 28px 80px rgba(0,0,0,.55)}.brand{display:flex;gap:12px;align-items:center;font:600 1.25rem 'Cormorant Garamond',serif;letter-spacing:.05em}.brand img{width:46px;height:46px;border-radius:50%}.eyebrow{margin:26px 0 8px;color:var(--gold);font-size:.72rem;font-weight:700;letter-spacing:.2em;text-transform:uppercase}h1{margin:0;font:500 clamp(2.2rem,5.5vw,3.3rem)/.95 'Cormorant Garamond',serif;letter-spacing:-.02em}p{color:var(--mut);max-width:60ch}.list{margin:24px 0 30px;padding:20px 22px;border-left:2px solid var(--gold);background:rgba(244,240,232,.035);color:var(--mut)}.actions{display:flex;flex-wrap:wrap;gap:12px;margin-top:30px}.button{min-height:50px;padding:0 23px;display:inline-flex;align-items:center;justify-content:center;border:1px solid var(--gold);background:transparent;color:var(--cream);font:700 .74rem/1 Manrope,sans-serif;letter-spacing:.13em;text-transform:uppercase;cursor:pointer;text-decoration:none}.button.primary{background:var(--gold);color:var(--k)}.button:hover{filter:brightness(1.1)}.fine{font-size:.78rem;margin-top:24px}.view[hidden]{display:none}.list p{margin:0 0 12px;max-width:none}.list p:last-child{margin:0}.list b{color:var(--cream);font-weight:600}.list{max-height:30vh;overflow:auto}h1:focus{outline:none}:focus-visible{outline:2px solid var(--cream);outline-offset:4px}@media(max-width:520px){.actions{display:grid}.button{width:100%}}
+  </style>
+</head>
+<body>
+  <main class="panel">
+    <div class="brand"><img src="/assets/img/logo.webp" alt=""><span>Yannis do Oeste</span></div>
+
+    <section id="choice" class="view" aria-labelledby="terms-title">
+      <p class="eyebrow">Antes de continuar</p>
+      <h1 id="terms-title">Termos de uso e privacidade</h1>
+      <p>Para acessar o site do Canil Yannis do Oeste, é necessário aceitar os termos abaixo, em conformidade com a Lei Geral de Proteção de Dados (LGPD — Lei nº 13.709/2018).</p>
+      <div class="list" tabindex="0" aria-label="Resumo dos termos">
+        <p><b>Cookie essencial.</b> Usamos um único cookie, necessário para registrar o seu aceite por 12 meses. Não usamos cookies de publicidade nem de rastreamento.</p>
+        <p><b>Serviços de terceiros.</b> O site carrega fontes do Google Fonts e pode exibir vídeos do YouTube ou Vimeo, que podem receber o seu endereço IP. Ao tocar nos botões de WhatsApp, você sai do site e passa a seguir as regras do WhatsApp.</p>
+        <p><b>Seus dados.</b> Não pedimos cadastro para navegar. Os dados que você enviar por WhatsApp ou Instagram são usados apenas para responder ao seu contato. Você pode pedir acesso, correção ou exclusão deles a qualquer momento pelo mesmo canal.</p>
+        <p><b>Conteúdo.</b> Textos, fotos e vídeos são protegidos e não podem ser reproduzidos sem autorização. Disponibilidade, valores e condições devem ser confirmados diretamente com o canil.</p>
+      </div>
+      <div class="actions"><button class="button primary" id="accept" type="button">Aceitar e acessar o site</button><button class="button" id="decline" type="button">Não aceito os termos</button></div>
+      <p class="fine">Seu aceite é salvo por 12 meses neste navegador e pode ser renovado ao limpar os dados de navegação.</p>
+    </section>
+
+    <section id="declined" class="view" hidden aria-labelledby="declined-title">
+      <p class="eyebrow">Acesso não liberado</p>
+      <h1 id="declined-title">Você não aceitou os termos.</h1>
+      <p>Sem o aceite, não é possível navegar pelo site. Isso é necessário para que possamos registrar o seu consentimento, como exige a LGPD. Você pode voltar e aceitar os termos ou sair agora.</p>
+      <div class="actions"><button class="button primary" id="review" type="button">Aceitar os termos</button><button class="button" id="leave" type="button">Sair</button></div>
+    </section>
+
+    <section id="thanks" class="view" hidden aria-live="polite" aria-labelledby="thanks-title">
+      <p class="eyebrow">Até logo</p>
+      <h1 id="thanks-title">Obrigado pela visita!</h1>
+      <p>Você será direcionado ao Google em instantes. Se preferir, volte quando quiser conhecer o Canil Yannis do Oeste.</p>
+      <div class="actions"><a class="button primary" id="go" href="https://www.google.com/" rel="noopener">Ir para o Google agora</a><button class="button" id="back" type="button">Voltar e aceitar os termos</button></div>
+    </section>
+  </main>
+  <script>
+    (function(){
+      var $=function(i){return document.getElementById(i)};
+      var views={choice:$('choice'),declined:$('declined'),thanks:$('thanks')},timer=null;
+      var q=new URLSearchParams(location.search),raw=q.get('next')||'/';
+      var next=/^\/(?![\/\\])/.test(raw)?raw:'/';
+      function show(name,url){
+        clearTimeout(timer);
+        Object.keys(views).forEach(function(k){views[k].hidden=(k!==name)});
+        history.replaceState(null,'',url);
+        var h=views[name].querySelector('h1');h.setAttribute('tabindex','-1');h.focus({preventScroll:true});
+      }
+      function choiceView(){show('choice','/termos?next='+encodeURIComponent(next))}
+      function post(url){return fetch(url,{method:'POST',headers:{'X-Requested-With':'fetch'},credentials:'same-origin'}).then(function(r){if(!r.ok)throw new Error();return r.json()})}
+      $('accept').onclick=$('review').onclick=function(){
+        post('/api/terms/accept').then(function(){location.replace(next)}).catch(function(){alert('Não foi possível registrar o aceite. Verifique se os cookies estão ativados e tente novamente.')});
+      };
+      $('decline').onclick=function(){post('/api/terms/decline').catch(function(){}).then(function(){show('declined','/termos?declined=1')})};
+      $('leave').onclick=function(){show('thanks','/termos?declined=1');timer=setTimeout(function(){location.href='https://www.google.com/'},3500)};
+      $('back').onclick=choiceView;
+      if(q.get('declined')==='1')show('declined','/termos?declined=1');
+    })();
+  </script>
+</body>
+</html>
