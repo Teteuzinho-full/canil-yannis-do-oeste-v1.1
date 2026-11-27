@@ -89,6 +89,37 @@ module.exports = ({ HttpError, log }) => {
     await log(req, 'excluir', 'content_images', id); res.status(204).end();
   });
 
+
+  // ---- admin: páginas novas, exclusão de páginas e textos do site
+  const slugify = t => t.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 60);
+  adm.post('/content', async (req, res) => {
+    const title = str(req.body.title, 200, 'Título', { required: true });
+    const base = slugify(title) || 'pagina'; let slug = base, n = 2;
+    while (await db.one('SELECT 1 FROM site_content WHERE slug=$1', [slug])) slug = `${base}-${n++}`;
+    const r = await db.one(`INSERT INTO site_content(slug,title,sort,published,custom) VALUES($1,$2,(SELECT COALESCE(MAX(sort),0)+10 FROM site_content),0,1) RETURNING *`, [slug, title]);
+    await log(req, 'criar', 'site_content'); res.status(201).json({ ...r, images: [] });
+  });
+  adm.delete('/content/:slug', async (req, res) => {
+    const r = await db.query('DELETE FROM site_content WHERE slug=$1', [req.params.slug]);
+    if (!r.rowCount) throw new HttpError(404, 'Seção não encontrada.');
+    await log(req, 'excluir', 'site_content'); res.status(204).end();
+  });
+  adm.get('/settings', async (req, res) => res.json(await db.rows('SELECT key,grp,label,value,multiline FROM site_settings ORDER BY sort,key')));
+  adm.put('/settings', async (req, res) => {
+    const b = req.body || {}, keys = Object.keys(b);
+    if (!keys.length) throw new HttpError(422, 'Nada para salvar.');
+    const ok = new Set((await db.rows('SELECT key FROM site_settings')).map(r => r.key));
+    for (const k of keys) {
+      if (!ok.has(k)) throw new HttpError(422, 'Campo inválido: ' + k);
+      let v = String(b[k] ?? '').trim();
+      if (v.length > 600) throw new HttpError(422, 'Texto longo demais (máx. 600 caracteres).');
+      if (k === 'whatsapp') { v = v.replace(/\D/g, ''); if (v.length < 10) throw new HttpError(422, 'WhatsApp: informe só números, com 55 e DDD.'); }
+      if (k === 'instagram') v = v.replace(/^@/, '').replace(/[^\w.]/g, '');
+      await db.query('UPDATE site_settings SET value=$1 WHERE key=$2', [v, k]);
+    }
+    await log(req, 'editar', 'site_settings'); res.json({ ok: true });
+  });
+
   // ---- admin: vídeos (dois espaços fixos)
   adm.get('/videos', async (req, res) => res.json(await db.rows('SELECT * FROM videos ORDER BY slot')));
   adm.put('/videos/:slot', async (req, res) => {

@@ -23,7 +23,7 @@ app.disable('x-powered-by');
 if (prod) app.set('trust proxy', 1);
 app.use(helmet({ contentSecurityPolicy: { directives: {
   defaultSrc: ["'self'"], scriptSrc: ["'self'", "'unsafe-inline'"], styleSrc: ["'self'", "'unsafe-inline'", 'https://fonts.googleapis.com'],
-  fontSrc: ['https://fonts.gstatic.com'], imgSrc: ["'self'", 'data:', 'https://*.public.blob.vercel-storage.com'], connectSrc: ["'self'"], frameAncestors: ["'none'"] } } }));
+  fontSrc: ['https://fonts.gstatic.com'], frameSrc: ['https://www.youtube-nocookie.com', 'https://player.vimeo.com'], mediaSrc: ["'self'", 'https:'], imgSrc: ["'self'", 'data:', 'https://*.public.blob.vercel-storage.com'], connectSrc: ["'self'"], frameAncestors: ["'none'"] } } }));
 app.use(express.json({ limit: '50kb' }));
 app.use(async (req, res, next) => { try { await db.ready(); next(); } catch (e) { next(e); } }); // migrations no primeiro acesso
 
@@ -44,14 +44,6 @@ app.use('/api', (req, res, next) => {
 });
 app.use('/api', rateLimit({ windowMs: 60_000, limit: 300, standardHeaders: true, legacyHeaders: false, message: { error: 'Muitas requisições. Aguarde um minuto.' } }));
 
-// ---- LGPD: aceite obrigatório dos termos (cookie httpOnly "lgpd", válido por 12 meses)
-const TERMS_V = 'v1'; // mude para 'v2' quando alterar os termos: todos precisarão aceitar de novo
-const termsCookie = `lgpd=${TERMS_V}; HttpOnly; SameSite=Lax; Path=/${prod ? '; Secure' : ''}`;
-const accepted = req => cookie(req, 'lgpd') === TERMS_V;
-app.get('/api/terms/status', (req, res) => res.set('Cache-Control', 'no-store').json({ accepted: accepted(req) }));
-app.post('/api/terms/accept', (req, res) => { res.setHeader('Set-Cookie', `${termsCookie}; Max-Age=31536000`); res.json({ accepted: true }); });
-app.post('/api/terms/decline', (req, res) => { res.setHeader('Set-Cookie', `${termsCookie}; Max-Age=0`); res.json({ accepted: false }); });
-
 // ---- público
 app.get('/api/dogs', async (req, res) => res.json(await db.rows('SELECT id,name,sex,pedigree,description,photo FROM dogs WHERE published=1 ORDER BY id DESC')));
 app.get('/api/litters', async (req, res) => res.json(await db.rows(
@@ -62,6 +54,15 @@ app.get('/api/testimonials', async (req, res) => res.json(await db.rows('SELECT 
 
 const content = require('./content')({ HttpError, log });
 app.use('/api', content.pub);
+
+// ---- estatística anônima (sem cookie, sem IP): visitas e cliques no WhatsApp
+const TRACK_RE = /^\/(?:|canil|genetica|alimentacao|vacinacao|parasitas|saude-articular|pedigree|microchipagem|acompanhamento-veterinario|equipe|privacidade|novos-lares|linhagens(?:\/[\w-]{1,40})?|rottweilers(?:\/\d{1,6})?|ninhadas\/\d{1,6}|p\/[\w-]{1,60})$/;
+app.post('/api/track', async (req, res) => {
+  const k = req.body && req.body.k, p = String((req.body && req.body.p) || '/').split(/[?#]/)[0];
+  if ((k === 'view' || k === 'wa') && TRACK_RE.test(p))
+    await db.query('INSERT INTO hits(day,kind,path,n) VALUES(current_date,$1,$2,1) ON CONFLICT (day,kind,path) DO UPDATE SET n=hits.n+1', [k, p]).catch(() => {});
+  res.status(204).end();
+});
 
 // ---- autenticação
 const DUMMY = bcrypt.hashSync('x', 12);
@@ -121,9 +122,16 @@ adm.use(content.adm);
 const tb = t => { if (!Object.hasOwn(TABLES, t)) throw new HttpError(404, 'Recurso não encontrado.'); return t; };
 adm.get('/stats', async (req, res) => {
   const c = t => db.one(`SELECT COUNT(*)::int AS total, COALESCE(SUM(published),0)::int AS pub FROM ${t}`);
-  const [dogs, litters, gallery, testimonials, recent] = await Promise.all([c('dogs'), c('litters'), c('gallery'), c('testimonials'),
+  const [dogs, litters, gallery, testimonials, recent] = await Promise.all([c('dogs'), c('homes'), c('gallery'), c('testimonials'),
     db.rows("SELECT action,entity,created_at FROM audit_log WHERE action<>'login_falhou' ORDER BY id DESC LIMIT 8")]);
-  res.json({ dogs, litters, gallery, testimonials, recent });
+  res.json({ dogs, homes: litters, gallery, testimonials, recent });
+});
+adm.get('/analytics', async (req, res) => {
+  const [tot, top, days] = await Promise.all([
+    db.rows("SELECT kind,SUM(n)::int AS n FROM hits WHERE day>=current_date-29 GROUP BY kind"),
+    db.rows("SELECT path,SUM(n)::int AS n FROM hits WHERE kind='view' AND day>=current_date-29 GROUP BY path ORDER BY n DESC LIMIT 8"),
+    db.rows("SELECT day::text AS day,kind,SUM(n)::int AS n FROM hits WHERE day>=current_date-6 GROUP BY day,kind ORDER BY day")]);
+  res.json({ tot, top, days });
 });
 adm.get('/audit', role('SUPER_ADMIN'), async (req, res) => res.json(await db.rows('SELECT * FROM audit_log ORDER BY id DESC LIMIT 100')));
 adm.get('/:t', async (req, res) => res.json(await db.rows(`SELECT * FROM ${tb(req.params.t)} ORDER BY id DESC`)));
@@ -151,17 +159,12 @@ adm.delete('/:t/:id', async (req, res) => {
 });
 app.use('/api/admin', adm);
 
-// ---- portão LGPD: sem aceite, qualquer página vai para /termos (admin, API e arquivos de /assets ficam livres)
-const OPEN = /^\/(?:termos|terms(?:\.html)?|admin(?:\.html)?|api|assets|uploads|robots\.txt|sitemap\.xml)(?:\/|$)/;
-const safeNext = n => (/^\/(?![\/\\])/.test(n || '') ? n : '/');
-app.get('/termos', (req, res) => {
-  res.set('Cache-Control', 'private, no-store');
-  if (accepted(req) && req.query.declined !== '1') return res.redirect(302, safeNext(String(req.query.next || '/')));
-  res.sendFile(path.join(ROOT, 'public/terms.html'));
-});
+// ---- antigos endereços dos termos: agora a política de privacidade
+app.get(/^\/(?:termos|terms)(?:\.html)?$/, (req, res) => res.redirect(301, '/privacidade'));
+// ---- cache das páginas públicas (CDN guarda 60 s; edições no painel aparecem em até 1 minuto)
 app.use((req, res, next) => {
-  if (!['GET', 'HEAD'].includes(req.method) || OPEN.test(req.path) || accepted(req)) return next();
-  res.set('Cache-Control', 'private, no-store').redirect(302, '/termos?next=' + encodeURIComponent(req.originalUrl));
+  if (['GET', 'HEAD'].includes(req.method) && !/^\/(?:api|admin)(?:\/|$|\.)/.test(req.path)) res.set('Cache-Control', 'public, max-age=0, s-maxage=60, stale-while-revalidate=300');
+  next();
 });
 
 // ---- SEO, páginas e estáticos
@@ -170,16 +173,18 @@ app.get('/sitemap.xml', async (q, r) => r.type('application/xml').send(`<?xml ve
 let homeTpl;
 app.get('/', async (q, r) => {
   homeTpl = homeTpl || await fs.readFile(path.join(ROOT, 'views/index.html'), 'utf8');
-  r.set('Cache-Control', 'private, no-cache').type('html').send(await pages.home(homeTpl));
+  r.type('html').send(await pages.home(homeTpl));
 });
-for (const t of ['canil', 'genetica', 'alimentacao', 'vacinacao', 'parasitas', 'saude-articular', 'pedigree', 'microchipagem', 'acompanhamento-veterinario', 'equipe'])
+for (const t of ['canil', 'genetica', 'alimentacao', 'vacinacao', 'parasitas', 'saude-articular', 'pedigree', 'microchipagem', 'acompanhamento-veterinario', 'equipe', 'privacidade'])
   app.get('/' + t, async (q, r, n) => { const h = await pages.topic('/' + t); h ? r.send(h) : n(); });
+app.get('/p/:slug', async (q, r, n) => { const h = await pages.custom(q.params.slug); h ? r.send(h) : n(); });
 app.get('/linhagens', async (q, r) => r.send(await pages.lineages()));
 app.get('/linhagens/:k', async (q, r, n) => { const h = await pages.lineage(q.params.k); h ? r.send(h) : n(); });
 app.get('/rottweilers', async (q, r) => r.send(await pages.dogs(String(q.query.sexo || ''))));
 app.get('/rottweilers/:id', async (q, r, n) => { const h = await pages.dog(Number(q.params.id) || 0); h ? r.send(h) : n(); });
-app.get('/filhotes', async (q, r) => r.send(await pages.litters()));
-app.get('/ninhadas/:id', async (q, r, n) => { const h = await pages.litter(Number(q.params.id) || 0); h ? r.send(h) : n(); });
+app.get('/novos-lares', async (q, r) => r.send(await pages.homes()));
+app.get('/filhotes', (q, r) => r.redirect(301, '/novos-lares'));
+app.get('/ninhadas/:id', (q, r) => r.redirect(301, '/novos-lares'));
 if (!VERCEL) app.use('/uploads', express.static(path.join(ROOT, 'uploads'), { maxAge: '7d', setHeaders: r => r.setHeader('X-Content-Type-Options', 'nosniff') }));
 app.use(express.static(path.join(ROOT, 'public'), { extensions: ['html'], maxAge: prod ? '1h' : 0 }));
 app.use((req, res) => req.path.startsWith('/api') ? res.status(404).json({ error: 'Rota não encontrada.' }) : res.status(404).sendFile(path.join(ROOT, 'views/404.html')));

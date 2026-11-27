@@ -51,3 +51,20 @@ Obs.: o rate limit usa memória, então no Vercel (serverless) vale por instânc
 
 ## Ainda não implementado
 Recuperação de senha por e-mail, cadastro de novos usuários, linha do tempo da ninhada, FAQ editável, gráficos, auditoria Lighthouse, remoção do arquivo no Blob ao excluir, armazenamento privado de documentos (hoje só dá para ocultar uma imagem), envio de vídeos grandes direto ao Blob (use link do YouTube/Vimeo ou arquivo de até 4 MB).
+
+
+## Versão 1.2 — o que mudou
+- **Sem portão de LGPD:** o site abre direto (Google e WhatsApp conseguem ler as páginas). Nova página `/privacidade` (editável em *Páginas e textos*); `/termos` redireciona para ela.
+- **CSP:** liberados embeds do YouTube/Vimeo e vídeos por link https/Blob.
+- **Home renderizada no servidor:** Rottweilers, ninhadas, galeria, depoimentos, parceiros e FAQ já vêm no HTML.
+- **Lightbox:** corrigido o XSS (legenda/alt com aspas).
+- **Cache:** páginas públicas com `s-maxage=60` + `stale-while-revalidate`; edições no painel aparecem em até 1 minuto.
+- **FAQ** (aba FAQ, com JSON-LD `FAQPage`), **Parceiros** (aba Parceiros) e **Textos do site** (aba própria: hero, faixa, títulos, contato, WhatsApp, Instagram, SEO da home) — tudo no banco (migration 5).
+- **Páginas novas:** em *Páginas e textos* dá para criar (`/p/slug`), publicar/tirar do ar e **excluir** qualquer página ou bloco.
+- **Estatística anônima:** `POST /api/track` (sem cookie, sem IP; respeita "Não rastrear"). Painel inicial mostra visitas e cliques no WhatsApp dos últimos 30 dias.
+- Removido o aviso "Iremos atualizar em breve." das páginas de conteúdo. Os espaços de vídeo continuam com "Vídeo em breve."
+
+## Versão 1.5 — Novos lares
+- A lista de ninhadas foi substituída por **Novos lares / Filhotes que já têm lar** (home e `/novos-lares`; `/filhotes` e `/ninhadas/*` redirecionam para lá).
+- Painel: aba **Novos lares** (foto, ordem, publicar/tirar do ar, excluir). Textos e chamada do WhatsApp em *Textos do site → Novos lares*.
+- Migration 8: cria a tabela `homes` e move para ela todas as fotos da galeria com categoria Filhotes. As ninhadas antigas continuam no banco, sem aparecer no site.

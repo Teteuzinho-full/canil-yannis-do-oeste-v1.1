@@ -71,6 +71,84 @@ const MIGRATIONS = [[
     for (const [slug, t] of Object.entries(TOPIC_TEXT))
       await c.query('UPDATE site_content SET summary=COALESCE(summary,$2::text), details=COALESCE(details,$3::text), subtitle=COALESCE(subtitle,$4::text) WHERE slug=$1', [slug, t.summary ?? null, t.details ?? null, t.subtitle ?? null]);
   },
+], [
+  `CREATE TABLE site_settings(key TEXT PRIMARY KEY, grp TEXT NOT NULL, label TEXT NOT NULL, value TEXT, multiline SMALLINT NOT NULL DEFAULT 0, sort INTEGER NOT NULL DEFAULT 0)`,
+  `CREATE TABLE faq(id SERIAL PRIMARY KEY, question TEXT NOT NULL, answer TEXT NOT NULL, sort INTEGER NOT NULL DEFAULT 0, published SMALLINT NOT NULL DEFAULT 1, created_at ${TS}, updated_at ${TS})`,
+  `CREATE TABLE partners(id SERIAL PRIMARY KEY, name TEXT NOT NULL, subtitle TEXT, image TEXT, wide SMALLINT NOT NULL DEFAULT 0, sort INTEGER NOT NULL DEFAULT 0, published SMALLINT NOT NULL DEFAULT 1, created_at ${TS}, updated_at ${TS})`,
+  `CREATE TABLE hits(day DATE NOT NULL DEFAULT current_date, kind TEXT NOT NULL, path TEXT NOT NULL, n INTEGER NOT NULL DEFAULT 0, PRIMARY KEY(day, kind, path))`,
+  'ALTER TABLE site_content ADD COLUMN IF NOT EXISTS custom SMALLINT NOT NULL DEFAULT 0',
+  async c => {
+    const { SETTINGS, FAQ, PARTNERS, PRIVACY } = require('./seed-site');
+    let n = 0;
+    for (const s of SETTINGS) await c.query('INSERT INTO site_settings(key,grp,label,value,multiline,sort) VALUES($1,$2,$3,$4,$5,$6) ON CONFLICT (key) DO NOTHING', [s.key, s.grp, s.label, s.value, s.multiline, (n += 10)]);
+    n = 0; for (const [q, a] of FAQ) await c.query('INSERT INTO faq(question,answer,sort) VALUES($1,$2,$3)', [q, a, (n += 10)]);
+    n = 0; for (const [nm, sub, img, w] of PARTNERS) await c.query('INSERT INTO partners(name,subtitle,image,wide,sort) VALUES($1,$2,$3,$4,$5)', [nm, sub, img, w, (n += 10)]);
+    await c.query(`INSERT INTO site_content(slug,sort,title,subtitle,body,details,published) VALUES('privacidade',900,$1,$2,$3,$3,1) ON CONFLICT (slug) DO NOTHING`, [PRIVACY.title, PRIVACY.subtitle, PRIVACY.details]);
+  },
+], [
+  async c => { // imagens e vídeos enviados pelo canil (tudo editável no painel)
+    const A = '/assets/';
+    // Rottweilers do plantel (o mais novo primeiro, para aparecer por último na lista)
+    const dogs = [
+      ['Vulkan', 'MACHO', '2026-08-20', 'Von Franco\'s Brasil Vulkan', A + 'videos/vulkan-poster.webp', A + 'videos/vulkan.mp4', A + 'videos/vulkan-poster.webp', A + 'dogs/vulkan-pedigree.webp'],
+      ['Zaira', 'FEMEA', null, null, A + 'dogs/zaira.webp', null, null, A + 'dogs/zaira-pedigree.webp'],
+      ['Mona', 'FEMEA', null, 'Linhagem Timit-Tor', A + 'dogs/mona.webp', null, null, A + 'dogs/mona-pedigree.webp'],
+      ['Ducatti', 'FEMEA', null, null, A + 'dogs/ducatti.webp', null, null, A + 'dogs/ducatti-pedigree.webp'],
+      ['Zeus', 'MACHO', null, null, A + 'dogs/zeus.webp', null, null, A + 'dogs/zeus-pedigree.webp'],
+    ];
+    for (const d of dogs) await c.query(`INSERT INTO dogs(name,sex,birth_date,description,photo,video,video_poster,pedigree_image,published)
+      SELECT $1::text,$2::text,$3::text,$4::text,$5::text,$6::text,$7::text,$8::text,1 WHERE NOT EXISTS (SELECT 1 FROM dogs WHERE lower(name)=lower($1::text))`, d);
+    // Galeria
+    const gal = [];
+    for (const i of [3, 4, 5, 6, 7, 9]) gal.push(['Filhote de Rottweiler', 'FILHOTES', A + `gallery/filhote-${i}.webp`]);
+    gal.push(
+      ['Acasalamento Moby Dick x Mona Timit-Tor', 'NINHADAS', A + 'gallery/galeria-1.webp'],
+      ['Rottweilers do plantel', 'ROTTWEILERS', A + 'gallery/galeria-2.webp'], ['Rottweilers do plantel', 'ROTTWEILERS', A + 'gallery/galeria-3.webp'],
+      ['Rottweiler adulto', 'ROTTWEILERS', A + 'gallery/galeria-4.webp'], ['Rottweiler adulto', 'ROTTWEILERS', A + 'gallery/galeria-5.webp'],
+      ['Filhote de Rottweiler', 'FILHOTES', A + 'gallery/galeria-6.webp']);
+    for (const g of gal) await c.query(`INSERT INTO gallery(caption,category,photo,published) SELECT $1::text,$2::text,$3::text,1 WHERE NOT EXISTS (SELECT 1 FROM gallery WHERE photo=$3::text)`, g);
+    // Certificado Timit-Tor da Mona na página da linhagem
+    await c.query(`INSERT INTO content_images(slug,url,alt,caption,position,sort,published)
+      SELECT 'linhagem-timit-tor',$1::text,'Certificado de origem Timit-Tor da Mona','Mona Timit-Tor','top',50,1
+      WHERE EXISTS (SELECT 1 FROM site_content WHERE slug='linhagem-timit-tor') AND NOT EXISTS (SELECT 1 FROM content_images WHERE url=$1::text)`, [A + 'content/mona-timit-tor-certificado.webp']);
+    // Vídeo do início (antes mostrava "Em breve teremos um novo vídeo")
+    await c.query(`UPDATE videos SET url=$1, poster=$2, published=1,
+      title=COALESCE(NULLIF(title,''),'Conheça o Canil Yannis do Oeste'), description=COALESCE(description,'Um olhar mais próximo sobre o Canil Yannis do Oeste.'), updated_at=now()
+      WHERE slot='canil' AND (url IS NULL OR url='')`, [A + 'videos/inicial.mp4', A + 'videos/inicial-poster.webp']);
+  },
+], [
+  async c => { // ajustes: Vulkan no plantel, Mia → Ducatti, fotos dos sócios fora da galeria
+    const A = '/assets/';
+    await c.query(`UPDATE dogs SET description='Von Franco''s Brasil Vulkan' WHERE lower(name)='vulkan' AND description LIKE 'Filhote%'`);
+    await c.query(`UPDATE dogs SET name='Ducatti', photo=$1, pedigree_image=$2 WHERE lower(name)='mia' AND photo=$3`, [A + 'dogs/ducatti.webp', A + 'dogs/ducatti-pedigree.webp', A + 'dogs/mia.webp']);
+    await c.query(`UPDATE dogs SET name='Ducatti' WHERE lower(name)='mia'`);
+    await c.query('DELETE FROM gallery WHERE photo = ANY($1)', [['gallery/filhote-1.webp', 'gallery/filhote-2.webp', 'gallery/zeus-1.webp'].map(f => A + f)]);
+    for (const [slug, f, alt] of [['darlan', 'darlan', 'Darlan, sócio-proprietário do Canil Yannis do Oeste'], ['bruna', 'bruna', 'Bruna, sócia-proprietária e médica-veterinária do Canil Yannis do Oeste']])
+      await c.query(`INSERT INTO content_images(slug,url,alt,position,sort,published)
+        SELECT $1::text,$2::text,$3::text,'center',(SELECT COALESCE(MIN(sort),0)-10 FROM content_images WHERE slug=$1::text),1
+        WHERE EXISTS (SELECT 1 FROM site_content WHERE slug=$1::text) AND NOT EXISTS (SELECT 1 FROM content_images WHERE url=$2::text)`, [slug, A + `content/${f}.webp`, alt]);
+  },
+], [
+  async c => { // "Novos lares": vitrine de filhotes que já saíram do canil (substitui a lista de ninhadas)
+    await c.query(`CREATE TABLE IF NOT EXISTS homes(id SERIAL PRIMARY KEY, photo TEXT NOT NULL, sort INTEGER NOT NULL DEFAULT 0, published SMALLINT NOT NULL DEFAULT 1, created_at ${TS}, updated_at ${TS})`);
+    // todas as fotos de filhotes da galeria vão para a nova seção
+    await c.query(`INSERT INTO homes(photo,sort,published) SELECT photo,0,published FROM gallery WHERE category='FILHOTES' ORDER BY id`);
+    await c.query(`DELETE FROM gallery WHERE category='FILHOTES'`);
+    const { rows: [b] } = await c.query(`SELECT sort FROM site_settings WHERE key='litters_title'`);
+    let n = b ? b.sort : 400;
+    const NEW = [
+      ['nav_homes', 'Nome no menu do site', 'Novos lares', 0],
+      ['homes_title', 'Título da seção', 'Filhotes que já têm lar', 0],
+      ['homes_lead', 'Frase abaixo do título', 'Filhotes que nasceram no Canil Yannis do Oeste e hoje vivem com suas famílias.', 1],
+      ['homes_empty', 'Texto quando ainda não há fotos', 'As fotos dos filhotes que já foram para suas famílias aparecerão aqui.', 1],
+      ['homes_cta_title', 'Chamada: título', 'Quer um Rottweiler do canil?', 0],
+      ['homes_cta_text', 'Chamada: texto', 'Fale com a gente para saber sobre as próximas ninhadas.', 1],
+      ['homes_cta_button', 'Chamada: texto do botão', 'Fale com a gente', 0],
+      ['homes_cta_msg', 'Chamada: mensagem que abre no WhatsApp', 'Olá! Vi os filhotes que já têm lar no site e gostaria de saber sobre as próximas ninhadas.', 1],
+    ];
+    for (const [k, label, v, ml] of NEW) await c.query(`INSERT INTO site_settings(key,grp,label,value,multiline,sort) VALUES($1,'Novos lares',$2,$3,$4,$5) ON CONFLICT (key) DO NOTHING`, [k, label, v, ml, ++n]);
+    await c.query(`DELETE FROM site_settings WHERE key = ANY($1)`, [['litters_title', 'litters_empty_title', 'litters_empty_text', 'litters_empty_cta']]);
+  },
 ]];
 
 async function init() {
